@@ -89,6 +89,9 @@ export interface GameConfig {
   category: string;
   coverImage?: string;
   levels: Level[];
+  isPublic?: boolean;
+  userId?: string;
+  organizationId?: string;
 }
 
 export type DragItem = { type: "option"; id: string } | { type: "static"; id: string };

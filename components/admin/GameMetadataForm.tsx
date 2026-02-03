@@ -109,6 +109,39 @@ export default function GameMetadataForm({ game, setGame, handleFileUpload }: Ga
           </div>
 
           <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visibilidade</label>
+            <div className="flex gap-4">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={game.isPublic === true}
+                  onChange={() => setGame({ ...game, isPublic: true })}
+                  className="sr-only peer"
+                />
+                <div className="p-3 text-center rounded-lg border border-gray-300 dark:border-zinc-700 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:border-blue-500 peer-checked:text-blue-600 dark:peer-checked:text-blue-400 transition-all">
+                  Público
+                </div>
+              </label>
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={game.isPublic !== true}
+                  onChange={() => setGame({ ...game, isPublic: false })}
+                  className="sr-only peer"
+                />
+                <div className="p-3 text-center rounded-lg border border-gray-300 dark:border-zinc-700 peer-checked:bg-orange-50 dark:peer-checked:bg-orange-900/20 peer-checked:border-orange-500 peer-checked:text-orange-600 dark:peer-checked:text-orange-400 transition-all">
+                  Privado
+                </div>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500">
+              {game.isPublic ? "Visível para todos os usuários." : "Visível apenas para sua organização."}
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Descrição</label>
             <textarea
               value={game.description}

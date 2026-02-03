@@ -1,17 +1,33 @@
-import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "./prisma";
 
-export const authOptions: NextAuthOptions = {
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        // Este provider pode ser usado para depuração ou fallback
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Implementação básica de autorização se necessário
+        if (!credentials?.email || !credentials?.password) return null;
+        
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string }
+        });
+
+        if (user && user.password === credentials.password) {
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            organizationId: user.organizationId,
+          };
+        }
+        
         return null;
       }
     }),
@@ -20,33 +36,48 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
+        (session.user as any).organizationId = token.organizationId;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.sub = user.id;
+        token.organizationId = (user as any).organizationId;
+      } else if (token.sub && !token.organizationId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub as string },
+          select: { organizationId: true }
+        });
+        if (dbUser) {
+          token.organizationId = dbUser.organizationId;
+        }
       }
       return token;
     }
   },
-  // Configuração para compartilhamento de sessão via cookie
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 dias
+  },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: process.env.NODE_ENV === 'production' 
+        ? `__Secure-next-auth.session-token` 
+        : `authjs.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // Aqui é onde definimos o domínio para compartilhar o cookie entre subdomínios
-        // Exemplo: .reabhub.com.br
-        domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined
+        domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN === 'localhost' 
+          ? undefined 
+          : (process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined)
       }
     }
   },
-  secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: '/login', // Você pode ajustar para a URL da outra aplicação se preferir
+    // signIn: process.env.NEXT_PUBLIC_MAIN_APP_LOGIN_URL || '/login', 
   }
-};
+});

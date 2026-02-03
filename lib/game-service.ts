@@ -1,48 +1,103 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { prisma } from './prisma';
 import { GameConfig } from "@/types/game";
-import { MOCK_GAMES } from './initial-data';
+import { Prisma } from '@prisma/client';
 
-const DB_PATH = path.join(process.cwd(), 'src', 'data', 'games.json');
-
-async function ensureDb() {
+export async function getAllGames(organizationId?: string): Promise<GameConfig[]> {
   try {
-    await fs.access(DB_PATH);
-  } catch {
-    await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-    // Initialize with mock data as an array
-    const initialData = Object.values(MOCK_GAMES);
-    await fs.writeFile(DB_PATH, JSON.stringify(initialData, null, 2));
-  }
-}
+    const games = await prisma.game.findMany({
+      where: {
+        OR: [
+          { isPublic: true },
+          ...(organizationId ? [{ organizationId }] : []),
+        ],
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
 
-export async function getAllGames(): Promise<GameConfig[]> {
-  await ensureDb();
-  try {
-    const data = await fs.readFile(DB_PATH, 'utf-8');
-    return JSON.parse(data);
+    return games.map(game => {
+      const config = game.config as any;
+      return {
+        ...config,
+        id: game.id,
+        name: game.name,
+        description: game.description || undefined,
+        type: game.type as any,
+        category: game.category,
+        coverImage: game.coverImage || undefined,
+        isPublic: game.isPublic,
+        userId: game.userId,
+        organizationId: game.organizationId,
+      };
+    });
   } catch (error) {
-    console.error("Error reading games database:", error);
-    return Object.values(MOCK_GAMES);
+    console.error("Error reading games from database:", error);
+    return [];
   }
 }
 
-export async function getGameConfig(id: string): Promise<GameConfig | null> {
-  const games = await getAllGames();
-  return games.find(g => g.id === id) || null;
+export async function getGameConfig(id: string, organizationId?: string): Promise<GameConfig | null> {
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id },
+    });
+
+    if (!game) return null;
+
+    // Verificar visibilidade: público ou pertence à mesma organização
+    if (!game.isPublic && game.organizationId !== organizationId) {
+      return null;
+    }
+
+    const config = game.config as any;
+    return {
+      ...config,
+      id: game.id,
+      name: game.name,
+      description: game.description || undefined,
+      type: game.type as any,
+      category: game.category,
+      coverImage: game.coverImage || undefined,
+      isPublic: game.isPublic,
+      userId: game.userId,
+      organizationId: game.organizationId,
+    };
+  } catch (error) {
+    console.error("Error reading game from database:", error);
+    return null;
+  }
 }
 
-export async function saveGame(game: GameConfig): Promise<void> {
-  await ensureDb();
-  const games = await getAllGames();
+export async function saveGame(game: GameConfig & { userId: string, organizationId: string, isPublic?: boolean }): Promise<void> {
+  const { id, name, description, type, category, coverImage, userId, organizationId, isPublic, levels, ...rest } = game;
   
-  // Check if game exists to update it, otherwise add new
-  const index = games.findIndex(g => g.id === game.id);
-  if (index >= 0) {
-    games[index] = game;
-  } else {
-    games.push(game);
-  }
-  
-  await fs.writeFile(DB_PATH, JSON.stringify(games, null, 2));
+  const config = { levels, ...rest } as unknown as Prisma.InputJsonValue;
+
+  await prisma.game.upsert({
+    where: { id },
+    update: {
+      name,
+      description,
+      type,
+      category,
+      coverImage,
+      config,
+      isPublic: isPublic ?? false,
+      userId,
+      organizationId,
+    },
+    create: {
+      id,
+      name,
+      description,
+      type,
+      category,
+      coverImage,
+      config,
+      isPublic: isPublic ?? false,
+      userId,
+      organizationId,
+    },
+  });
 }

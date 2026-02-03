@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from "lucide-react";
-import GameRunner from "../game-engine/GameRunner";
+import GameRunner from "@/components/game-engine/GameRunner";
 import { Level, GameType, GameConfig } from "@/types/game";
 
 interface PreviewModalProps {

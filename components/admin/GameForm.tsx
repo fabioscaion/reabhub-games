@@ -17,13 +17,14 @@ interface GameFormProps {
 export default function GameForm({ initialData }: GameFormProps) {
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState<GameConfig>(initialData || {
-    id: crypto.randomUUID(),
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
     name: "",
     description: "",
     type: "naming",
     category: "Linguagem Expressiva",
     coverImage: "",
-    levels: []
+    levels: [],
+    isPublic: false
   });
 
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);

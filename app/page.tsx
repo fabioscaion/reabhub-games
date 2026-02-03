@@ -3,9 +3,16 @@ import CategoryRow from "@/components/ui/CategoryRow";
 import { GameConfig } from "@/types/game";
 import { Gamepad2, Plus } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import UserMenu from "@/components/ui/UserMenu";
 
 export default async function Home() {
-  const games = await getAllGames();
+  const session = await auth();
+  const organizationId = (session?.user as any)?.organizationId;
+
+  console.log("Session:", session);
+  
+  const games = await getAllGames(organizationId);
 
   // Group games by category
   const categories: Record<string, GameConfig[]> = {};
@@ -34,7 +41,7 @@ export default async function Home() {
               <Plus size={16} />
               <span>Criar Jogo</span>
             </Link>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-red-500 to-orange-500" />
+            <UserMenu />
           </div>
         </div>
       </header>

@@ -1,8 +1,25 @@
 import GameForm from "@/components/admin/GameForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function CreateGamePage() {
+export default async function CreateGamePage() {
+  const session = await auth();
+  
+  if (!session) {
+    // Em vez de redirecionar para uma página local, podemos apenas não renderizar ou mostrar uma mensagem
+    // Já que o login é externo. Idealmente, o middleware ou o app principal cuidaria disso.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white p-4">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Acesso Restrito</h1>
+          <p className="text-zinc-400">Você precisa estar logado no ReabHub para criar jogos.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-gray-100">
       <header className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur">

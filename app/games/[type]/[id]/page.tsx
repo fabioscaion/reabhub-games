@@ -3,6 +3,7 @@ import GameRunner from "@/components/game-engine/GameRunner";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { auth } from "@/lib/auth";
 
 interface GamePageProps {
   params: Promise<{
@@ -13,7 +14,10 @@ interface GamePageProps {
 
 export default async function GamePage({ params }: GamePageProps) {
   const { id, type } = await params;
-  const gameConfig = await getGameConfig(id);
+  const session = await auth();
+  const organizationId = (session?.user as any)?.organizationId;
+  
+  const gameConfig = await getGameConfig(id, organizationId);
 
   if (!gameConfig) {
     notFound();
