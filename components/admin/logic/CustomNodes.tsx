@@ -86,6 +86,7 @@ export const BroadcastNode = ({ data }: any) => {
         <div className="flex items-center justify-between mb-1">
           <label className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Caminhos</label>
           <button 
+            type="button"
             onClick={addOutput}
             className="p-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md hover:bg-emerald-100 transition-colors"
             title="Adicionar Saída"
@@ -105,6 +106,7 @@ export const BroadcastNode = ({ data }: any) => {
               />
               {outputs.length > 1 && (
                 <button 
+                  type="button"
                   onClick={() => removeOutput(index)}
                   className="p-0.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
@@ -404,6 +406,7 @@ export const ActionNode = ({ data }: any) => {
            <div>
              <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Configuração</label>
              <button 
+               type="button"
                className="w-full text-[10px] p-2 border border-dashed border-gray-300 dark:border-zinc-700 rounded bg-gray-50 dark:bg-zinc-900 text-gray-500 hover:border-blue-500"
                onClick={() => data.onOpenMediaLibrary?.('audio', (b64: string) => data.onDataChange?.({ value: b64 }))}
              >

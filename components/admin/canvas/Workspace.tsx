@@ -128,7 +128,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
             value={zoomInputValue}
             onChange={handleZoomInputChange}
             onBlur={handleZoomInputBlur}
-            onKeyDown={handleZoomInputKeyDown}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleZoomInputBlur();
+              }
+              handleZoomInputKeyDown(e);
+            }}
             className="w-10 text-xs font-mono text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
           />
           <span className="text-xs font-mono">%</span>

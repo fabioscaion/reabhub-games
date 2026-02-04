@@ -326,6 +326,7 @@ export default function GameCanvas({
         <div className="flex items-center gap-4">
           {onClose && (
             <button 
+              type="button"
               onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
               title="Voltar"
@@ -334,11 +335,11 @@ export default function GameCanvas({
             </button>
           )}
           <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-lg w-fit">
-             <button onClick={() => { setEditingView('level'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'level' ? 'bg-white dark:bg-zinc-700 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Editor do Nível</button>
+             <button type="button" onClick={() => { setEditingView('level'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'level' ? 'bg-white dark:bg-zinc-700 shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Editor do Nível</button>
              {(level.type === 'game' || !level.type) && (
                <>
-                 <button onClick={() => { setEditingView('success'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'success' ? 'bg-white dark:bg-zinc-700 shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}>Tela de Sucesso</button>
-                 <button onClick={() => { setEditingView('error'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'error' ? 'bg-white dark:bg-zinc-700 shadow text-red-600' : 'text-gray-500 hover:text-gray-700'}`}>Tela de Erro</button>
+                 <button type="button" onClick={() => { setEditingView('success'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'success' ? 'bg-white dark:bg-zinc-700 shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}>Tela de Sucesso</button>
+                 <button type="button" onClick={() => { setEditingView('error'); setSelectedItem(null); }} className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${editingView === 'error' ? 'bg-white dark:bg-zinc-700 shadow text-red-600' : 'text-gray-500 hover:text-gray-700'}`}>Tela de Erro</button>
                </>
              )}
           </div>
@@ -525,6 +526,7 @@ export default function GameCanvas({
             )}
             <span className="font-medium">{snackbar.message}</span>
             <button 
+              type="button"
               onClick={() => setSnackbar(prev => ({ ...prev, show: false }))}
               className="ml-4 p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
             >

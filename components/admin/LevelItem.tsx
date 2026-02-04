@@ -71,6 +71,7 @@ export default function LevelItem({ level, index, onEdit, onDuplicate, onRemove,
                 onBlur={() => onUpdateName?.(index, localName)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
+                    e.preventDefault();
                     (e.target as HTMLInputElement).blur();
                   }
                 }}
