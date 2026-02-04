@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { GameConfig, GameType, Level } from "@/types/game";
 import { createGameAction, updateGameAction } from "@/actions/game-actions";
-import { Save, CheckCircle2 } from "lucide-react";
+import { Save, CheckCircle2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import GameMetadataForm from "./GameMetadataForm";
 import LevelManager from "./LevelManager";
@@ -18,6 +19,11 @@ interface GameFormProps {
 export default function GameForm({ initialData }: GameFormProps) {
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   const [feedback, setFeedback] = useState<{ type: "success" | "error" | "info"; title: string; message: string } | null>(null);
   const [game, setGame] = useState<GameConfig>(initialData || {
     id: generateId(),
@@ -56,13 +62,16 @@ export default function GameForm({ initialData }: GameFormProps) {
 
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);
 
-  const handleSave = async (gameData = game) => {
+  const handleSave = async (gameData = game, showSnackbar = true) => {
     if (gameData.levels.length === 0) {
-      setFeedback({
-        type: "info",
-        title: "Níveis Ausentes",
-        message: "Adicione pelo menos um nível ao jogo antes de salvar."
-      });
+      if (showSnackbar) {
+        setSnackbar({
+          show: true,
+          message: "Adicione pelo menos um nível ao jogo antes de salvar.",
+          type: "info"
+        });
+        setTimeout(() => setSnackbar(prev => ({ ...prev, show: false })), 4000);
+      }
       return;
     }
     
@@ -76,22 +85,32 @@ export default function GameForm({ initialData }: GameFormProps) {
       }
       
       setSaveSuccess(true);
-      setFeedback({
-        type: "success",
-        title: "Jogo Salvo",
-        message: "As alterações foram salvas com sucesso no banco de dados."
-      });
+      if (showSnackbar) {
+        setSnackbar({
+          show: true,
+          message: "Jogo salvo com sucesso!",
+          type: "success"
+        });
+      }
       
-      // Reset success state after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
+      // Reset states
+      setTimeout(() => {
+        setSaveSuccess(false);
+        if (showSnackbar) {
+          setSnackbar(prev => ({ ...prev, show: false }));
+        }
+      }, 3000);
       
     } catch (error) {
       console.error(error);
-      setFeedback({
-        type: "error",
-        title: "Erro ao Salvar",
-        message: "Ocorreu um problema ao tentar salvar as alterações do jogo."
-      });
+      if (showSnackbar) {
+        setSnackbar({
+          show: true,
+          message: "Erro ao salvar as alterações do jogo.",
+          type: "error"
+        });
+        setTimeout(() => setSnackbar(prev => ({ ...prev, show: false })), 4000);
+      }
     } finally {
       setLoading(false);
     }
@@ -178,7 +197,7 @@ export default function GameForm({ initialData }: GameFormProps) {
             newLevels[editingLevelIndex] = updatedLevel;
             const updatedGame = { ...game, levels: newLevels };
             setGame(updatedGame);
-            await handleSave(updatedGame);
+            await handleSave(updatedGame, false); // false para não mostrar o snackbar do jogo
           }}
         />
       )}
@@ -213,7 +232,43 @@ export default function GameForm({ initialData }: GameFormProps) {
         </button>
       </div>
 
-      {/* Feedback Modal */}
+      {/* Snackbar / Toast Notification */}
+      <AnimatePresence>
+        {snackbar.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200]"
+          >
+            <div className={`flex items-center gap-3 px-6 py-3 rounded-xl shadow-2xl border ${
+              snackbar.type === 'success' 
+                ? 'bg-white dark:bg-zinc-900 border-green-100 dark:border-green-900/30 text-green-600 dark:text-green-400' 
+                : snackbar.type === 'info'
+                ? 'bg-white dark:bg-zinc-900 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400'
+                : 'bg-white dark:bg-zinc-900 border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400'
+            }`}>
+              {snackbar.type === 'success' ? (
+                <CheckCircle2 size={20} className="text-green-500" />
+              ) : snackbar.type === 'info' ? (
+                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold">i</div>
+              ) : (
+                <X size={20} className="text-red-500" />
+              )}
+              <span className="font-medium">{snackbar.message}</span>
+              <button 
+                type="button"
+                onClick={() => setSnackbar(prev => ({ ...prev, show: false }))}
+                className="ml-4 p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+              >
+                <X size={14} className="text-gray-400" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Feedback Modal (Still used for critical errors like Session Expired) */}
       {feedback && (
         <FeedbackModal
           isOpen={!!feedback}
