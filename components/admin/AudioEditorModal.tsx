@@ -416,6 +416,12 @@ export default function AudioEditorModal({
               onChange={(e) => setNewName(e.target.value)}
               className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               placeholder="Nome do novo áudio"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSave();
+                }
+              }}
             />
           </div>
 
@@ -430,7 +436,10 @@ export default function AudioEditorModal({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={handleTogglePlay}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleTogglePlay();
+                    }}
                     disabled={isLoading}
                     className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
                     title={isPlaying ? "Pausar" : "Reproduzir"}
@@ -440,7 +449,8 @@ export default function AudioEditorModal({
 
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       if (eeRef.current) {
                         eeRef.current.emit('stop');
                         setIsPlaying(false);
@@ -457,7 +467,10 @@ export default function AudioEditorModal({
 
                   <button
                     type="button"
-                    onClick={handlePlaySelection}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePlaySelection();
+                    }}
                     disabled={isLoading}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50 font-medium text-sm"
                     title="Reproduzir Seleção"
@@ -468,7 +481,10 @@ export default function AudioEditorModal({
 
                   <button
                     type="button"
-                    onClick={handleTrim}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleTrim();
+                    }}
                     disabled={isLoading}
                     className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 font-medium text-sm"
                     title="Recortar para a Seleção"
@@ -479,7 +495,8 @@ export default function AudioEditorModal({
 
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       if (eeRef.current) {
                         eeRef.current.emit('select', 0, 0);
                         setSelection(null);
