@@ -14,6 +14,8 @@ import { triggerSuccessConfetti, triggerConfetti } from "@/lib/confetti";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import Image from "next/image";
 import { Image as ImageIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { transitionVariants } from "@/lib/transitions";
 
 interface GameRunnerProps {
   config: GameConfig;
@@ -51,6 +53,8 @@ export default function GameRunner({ config }: GameRunnerProps) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [forcedFeedback, setForcedFeedback] = useState<'success' | 'error' | null>(null);
+  const [activeTransition, setActiveTransition] = useState<string>('fade');
   const [isFinished, setIsFinished] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,10 +77,36 @@ export default function GameRunner({ config }: GameRunnerProps) {
       setSelectedOptions([]);
       setIsAnswered(false);
       setShowFeedback(false);
+      setForcedFeedback(null);
     },
     onGameFinished: () => {
       setIsFinished(true);
       triggerConfetti();
+    },
+    onShowSuccess: () => {
+      setIsAnswered(true);
+      setShowFeedback(true);
+      setForcedFeedback('success');
+      setScore((prev) => prev + 1);
+      triggerSuccessConfetti();
+    },
+    onShowError: () => {
+      setIsAnswered(true);
+      setShowFeedback(true);
+      setForcedFeedback('error');
+    },
+    onLevelChange: (levelId, transition) => {
+      const levelIndex = config.levels.findIndex(l => l.id === levelId);
+      if (levelIndex !== -1) {
+        if (transition) setActiveTransition(transition);
+        setCurrentLevelIndex(levelIndex);
+        setSelectedOption(null);
+        setSelectedOptions([]);
+        setIsAnswered(false);
+        setShowFeedback(false);
+        setForcedFeedback(null);
+        resetLogicState();
+      }
     }
   });
 
@@ -223,6 +253,7 @@ export default function GameRunner({ config }: GameRunnerProps) {
     setSelectedOptions([]);
     setIsAnswered(false);
     setShowFeedback(false);
+    setForcedFeedback(null);
     resetLogicState();
   };
 
@@ -241,9 +272,11 @@ export default function GameRunner({ config }: GameRunnerProps) {
   const isStimulusImage = currentLevel.stimulus?.type === "image";
   const hasPositioning = currentLevel.options.some(opt => opt.position) || !!currentLevel.stimulus?.position || (currentLevel.staticElements && currentLevel.staticElements.length > 0);
 
-  const isCorrect = showChecklist
-    ? (correctOptions.length > 0 && correctOptions.every(o => selectedOptions.includes(o.id)))
-    : (selectedOption ? currentLevel.options.find(o => o.id === selectedOption)?.isCorrect : false);
+  const isCorrect = forcedFeedback 
+    ? forcedFeedback === 'success'
+    : (showChecklist
+        ? (correctOptions.length > 0 && correctOptions.every(o => selectedOptions.includes(o.id)))
+        : (selectedOption ? currentLevel.options.find(o => o.id === selectedOption)?.isCorrect : false));
   const customScreen = showFeedback ? (isCorrect ? currentLevel.successScreen : currentLevel.errorScreen) : null;
   const hasCustomScreen = customScreen && ((customScreen.staticElements?.length || 0) > 0 || !!customScreen.style?.backgroundColor);
 
@@ -258,10 +291,20 @@ export default function GameRunner({ config }: GameRunnerProps) {
         formatTime={formatTime}
       />
 
-      <div className="flex-1 flex flex-col justify-center">
-        <div className={cn("flex gap-6", showChecklist ? "flex-col lg:flex-row" : "flex-col")}>
-        <div className="flex-1 relative">
-        {hasCustomScreen ? (
+      <div className="flex-1 flex flex-col justify-center relative overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentLevelIndex}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={(transitionVariants as any)[activeTransition] || transitionVariants.fade}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="flex-1 flex flex-col justify-center"
+          >
+            <div className={cn("flex gap-6", showChecklist ? "flex-col lg:flex-row" : "flex-col")}>
+            <div className="flex-1 relative">
+            {hasCustomScreen ? (
              <div 
                className="relative w-full mx-auto aspect-video bg-white rounded-xl overflow-hidden shadow-xl border border-gray-200 dark:border-zinc-800 transition-colors duration-300"
                style={{ backgroundColor: customScreen.style?.backgroundColor }}
@@ -453,6 +496,8 @@ export default function GameRunner({ config }: GameRunnerProps) {
             </button>
           </div>
         )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

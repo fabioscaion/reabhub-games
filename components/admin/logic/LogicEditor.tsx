@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -28,9 +28,10 @@ const nodeTypes = {
 interface LogicEditorProps {
   initialNodes?: any[];
   initialEdges?: any[];
-  onSave: (nodes: any[], edges: any[]) => void;
+  onSave: (nodes: any[], edges: any[]) => Promise<void> | void;
   onClose: () => void;
   elements: any[]; // List of elements in the current level to trigger events on
+  availableLevels?: { id: string, name: string }[];
   focusElementId?: string;
   onOpenAudioLibrary?: (callback: (base64: string) => void) => void;
 }
@@ -41,12 +42,23 @@ export default function LogicEditor({
   onSave, 
   onClose, 
   elements, 
+  availableLevels = [],
   focusElementId,
   onOpenAudioLibrary 
 }: LogicEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>(initialEdges);
+  const [isSaving, setIsSaving] = useState(false);
   const initializedRef = React.useRef<string | null>(null);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(nodes, edges);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Memoize node change handler to avoid recreation
   const handleNodeDataChange = useCallback((nodeId: string, newData: any) => {
@@ -67,6 +79,7 @@ export default function LogicEditor({
       data: {
         ...node.data,
         availableElements: elements,
+        availableLevels: availableLevels,
         onDataChange: (newData: any) => handleNodeDataChange(node.id, newData),
         onOpenAudioLibrary: onOpenAudioLibrary
       }
@@ -205,11 +218,12 @@ export default function LogicEditor({
           <h2 className="text-lg font-bold">Editor de Lógica Visual</h2>
         </div>
         <button
-          onClick={() => onSave(nodes, edges)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save size={18} />
-          Salvar Lógica
+          <Save size={18} className={isSaving ? "animate-spin" : ""} />
+          {isSaving ? 'Salvando...' : 'Salvar Lógica'}
         </button>
       </div>
 

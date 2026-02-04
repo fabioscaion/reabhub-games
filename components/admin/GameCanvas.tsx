@@ -15,11 +15,12 @@ import { useCanvasHandlers } from "@/hooks/useCanvasHandlers";
 import { useLayerManagement } from "@/hooks/useLayerManagement";
 import { useMediaLibraries } from "@/hooks/useMediaLibraries";
 import { useElementManagement } from "@/hooks/useElementManagement";
-import { toBase64, handleFileUpload } from "@/lib/utils";
+import { toBase64, handleFileUpload, generateId } from "@/lib/utils";
 
 interface GameCanvasProps {
   level: Level;
   onChange: (updatedLevel: Level) => void;
+  onSaveGame?: (updatedLevel: Level) => Promise<void>;
   gameType?: GameType;
   allLevels?: Level[];
   onClose?: () => void;
@@ -28,7 +29,8 @@ interface GameCanvasProps {
 export default function GameCanvas({ 
   level, 
   onChange, 
-  gameType = "naming", 
+  onSaveGame,
+  gameType = 'naming',
   allLevels = [],
   onClose
 }: GameCanvasProps) {
@@ -273,7 +275,7 @@ export default function GameCanvas({
   const handlePaste = useCallback(() => {
     if (!clipboard) return;
 
-    const newId = crypto.randomUUID();
+    const newId = generateId();
     const position = { 
       x: Math.min(90, (clipboard.data.position?.x || 50) + 5), 
       y: Math.min(90, (clipboard.data.position?.y || 50) + 5) 
@@ -454,8 +456,12 @@ export default function GameCanvas({
         initialNodes={level.logic?.nodes || []}
         initialEdges={level.logic?.edges || []}
         focusElementId={logicFocusElementId || undefined}
-        onSave={(nodes, edges) => {
+        onSave={async (nodes, edges) => {
+          const updatedLevel = { ...level, logic: { nodes, edges } };
           updateLevel({ logic: { nodes, edges } });
+          if (onSaveGame) {
+            await onSaveGame(updatedLevel);
+          }
           setShowLogicEditor(false);
           setLogicFocusElementId(null);
         }}
@@ -464,6 +470,7 @@ export default function GameCanvas({
           setLogicFocusElementId(null);
         }}
         onOpenAudioLibrary={openAudioLibrary}
+        availableLevels={allLevels.map(l => ({ id: l.id, name: l.name || `Nível ${l.id.substring(0,4)}` }))}
         elements={[
           ...level.options.map(o => ({ id: o.id, type: 'option', name: o.content.name || o.content.value })),
           ...getActiveStaticElements().map(e => ({ id: e.id, type: 'static', name: e.name || e.value }))

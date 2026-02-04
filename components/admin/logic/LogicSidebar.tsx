@@ -13,7 +13,9 @@ import {
   GitFork, 
   Clock, 
   Share2,
-  Target 
+  Target,
+  CheckCircle,
+  XCircle 
 } from 'lucide-react';
 
 interface LogicSidebarProps {
@@ -77,6 +79,13 @@ const LogicSidebar = ({
               <Target size={18} className="text-yellow-600 dark:text-yellow-400 group-hover:scale-110 transition-transform" />
               <span className="text-center leading-tight">Ao Encostar</span>
             </button>
+            <button 
+              onClick={() => addEventNode('onSeparate', 'Ao Desencostar')}
+              className="flex flex-col items-center justify-center p-3 gap-2 text-[10px] font-medium bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-xl hover:bg-yellow-100 dark:hover:bg-yellow-900/20 transition-all group"
+            >
+              <Target size={18} className="text-yellow-600 dark:text-yellow-400 group-hover:scale-110 transition-transform opacity-50" />
+              <span className="text-center leading-tight">Ao Desencostar</span>
+            </button>
           </div>
         </div>
 
@@ -97,6 +106,20 @@ const LogicSidebar = ({
             >
               <ArrowRight size={18} className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
               <span className="text-center leading-tight">Ir p/ Nível</span>
+            </button>
+            <button 
+              onClick={() => addActionNode('goToSuccess', 'Ir para Sucesso')}
+              className="flex flex-col items-center justify-center p-3 gap-2 text-[10px] font-medium bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/20 transition-all group"
+            >
+              <CheckCircle size={18} className="text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform" />
+              <span className="text-center leading-tight">Sucesso</span>
+            </button>
+            <button 
+              onClick={() => addActionNode('goToError', 'Ir para Erro')}
+              className="flex flex-col items-center justify-center p-3 gap-2 text-[10px] font-medium bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-all group"
+            >
+              <XCircle size={18} className="text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
+              <span className="text-center leading-tight">Erro</span>
             </button>
             <button 
               onClick={() => addActionNode('setProperty', 'Alterar Propriedade')}

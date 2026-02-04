@@ -63,16 +63,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   cookies: {
     sessionToken: {
-      name: `__Secure-authjs.session-token`,
+      name: process.env.NODE_ENV === "production" ? `__Secure-authjs.session-token` : `authjs.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: NEXTAUTH_URL?.startsWith('https://') || process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production",
         domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN === 'localhost' 
           ? undefined 
           : (process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined)
-      }
+      },
     }
   },
   pages: {

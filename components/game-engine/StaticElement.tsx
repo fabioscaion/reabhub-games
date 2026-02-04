@@ -76,13 +76,20 @@ const StaticElement = ({
           executeLogic('onOverlap', { id: element.id, targetId });
         }
       } else {
-        // Remove from set if it's no longer overlapping
-        overlappingElements.current.delete(targetId);
+        // Remove from set if it's no longer overlapping and trigger onSeparate
+        if (overlappingElements.current.has(targetId)) {
+          overlappingElements.current.delete(targetId);
+          executeLogic('onSeparate', { id: element.id, targetId });
+        }
       }
     });
   };
 
   const handleDragEnd = (event: any, info: any) => {
+    // Trigger onSeparate for all remaining overlapping elements
+    overlappingElements.current.forEach((targetId) => {
+      executeLogic('onSeparate', { id: element.id, targetId });
+    });
     overlappingElements.current.clear();
   };
 

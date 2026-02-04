@@ -7,6 +7,9 @@ interface UseGameLogicProps {
   setCurrentLevelIndex: (index: number | ((prev: number) => number)) => void;
   onLevelComplete?: () => void;
   onGameFinished?: () => void;
+  onShowSuccess?: () => void;
+  onShowError?: () => void;
+  onLevelChange?: (levelId: string, transition?: string) => void;
 }
 
 export function useGameLogic({
@@ -14,7 +17,10 @@ export function useGameLogic({
   currentLevelIndex,
   setCurrentLevelIndex,
   onLevelComplete,
-  onGameFinished
+  onGameFinished,
+  onShowSuccess,
+  onShowError,
+  onLevelChange
 }: UseGameLogicProps) {
   const [activeAnimations, setActiveAnimations] = useState<Record<string, string>>({});
   const [propertyOverrides, setPropertyOverrides] = useState<Record<string, Record<string, any>>>({});
@@ -45,13 +51,19 @@ export function useGameLogic({
 
   const onLevelCompleteRef = useRef(onLevelComplete);
   const onGameFinishedRef = useRef(onGameFinished);
+  const onShowSuccessRef = useRef(onShowSuccess);
+  const onShowErrorRef = useRef(onShowError);
+  const onLevelChangeRef = useRef(onLevelChange);
   const configRef = useRef(config);
 
   useEffect(() => {
     onLevelCompleteRef.current = onLevelComplete;
     onGameFinishedRef.current = onGameFinished;
+    onShowSuccessRef.current = onShowSuccess;
+    onShowErrorRef.current = onShowError;
+    onLevelChangeRef.current = onLevelChange;
     configRef.current = config;
-  }, [onLevelComplete, onGameFinished, config]);
+  }, [onLevelComplete, onGameFinished, onShowSuccess, onShowError, onLevelChange, config]);
 
   const resetLevelState = useCallback(() => {
     setActiveAnimations({});
@@ -193,7 +205,11 @@ export function useGameLogic({
           (!n.data.elementId || n.data.elementId === triggerData?.id) && 
           (!n.data.targetElementId || n.data.targetElementId === triggerData?.targetId)
         ) ||
-        (triggerType !== 'onClick' && triggerType !== 'onOverlap')
+        (triggerType === 'onSeparate' && 
+          (!n.data.elementId || n.data.elementId === triggerData?.id) && 
+          (!n.data.targetElementId || n.data.targetElementId === triggerData?.targetId)
+        ) ||
+        (triggerType !== 'onClick' && triggerType !== 'onOverlap' && triggerType !== 'onSeparate')
       )
     );
 
@@ -214,13 +230,17 @@ export function useGameLogic({
           const audio = new Audio(value);
           audio.play().catch(err => console.error("Error playing logic audio:", err));
         } else if (actionType === 'goToLevel' && value) {
-          const config = configRef.current;
-          const targetIndex = config.levels.findIndex(l => l.id === value);
-          if (targetIndex !== -1) {
-            setCurrentLevelIndex(targetIndex);
-            resetLevelState();
-            return;
+          if (onLevelChangeRef.current) {
+            onLevelChangeRef.current(value, node.data.transition);
+          } else {
+            const config = configRef.current;
+            const targetIndex = config.levels.findIndex(l => l.id === value);
+            if (targetIndex !== -1) {
+              setCurrentLevelIndex(targetIndex);
+              resetLevelState();
+            }
           }
+          return;
         } else if (actionType === 'animate' && value) {
           const elementId = targetElementId;
           const animation = value;
@@ -285,7 +305,13 @@ export function useGameLogic({
         } else if (actionType === 'completeLevel') {
             if (handleNextLevelRef.current) handleNextLevelRef.current();
             return;
-          }
+        } else if (actionType === 'goToSuccess') {
+            if (onShowSuccessRef.current) onShowSuccessRef.current();
+            return;
+        } else if (actionType === 'goToError') {
+            if (onShowErrorRef.current) onShowErrorRef.current();
+            return;
+        }
         } else if (node.type === 'logic') {
         const { logicType } = node.data;
         const value = replaceVariables(node.data.value);

@@ -10,6 +10,8 @@ import { triggerConfetti, triggerSuccessConfetti } from "@/lib/confetti";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import StaticElement from "./StaticElement";
 import OptionButton from "./OptionButton";
+import { motion, AnimatePresence } from "framer-motion";
+import { transitionVariants } from "@/lib/transitions";
 
 interface SequencingGameRunnerProps {
   config: GameConfig;
@@ -21,6 +23,7 @@ export default function SequencingGameRunner({ config }: SequencingGameRunnerPro
   const [currentStep, setCurrentStep] = useState(1); // Expecting order 1, then 2, etc.
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [isFinished, setIsFinished] = useState(false);
+  const [activeTransition, setActiveTransition] = useState<string>('fade');
   const [wrongFeedbackId, setWrongFeedbackId] = useState<string | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +42,24 @@ export default function SequencingGameRunner({ config }: SequencingGameRunnerPro
     onGameFinished: () => {
       setIsFinished(true);
       triggerConfetti();
+    },
+    onShowSuccess: () => {
+      triggerSuccessConfetti();
+    },
+    onShowError: () => {
+      // Feedback for error
+    },
+    onLevelChange: (levelId, transition) => {
+      const levelIndex = config.levels.findIndex(l => l.id === levelId);
+      if (levelIndex !== -1) {
+        if (transition) setActiveTransition(transition);
+        setCurrentLevelIndex(levelIndex);
+        setShuffledOptions([]);
+        setCurrentStep(1);
+        setCompletedIds([]);
+        setWrongFeedbackId(null);
+        resetLogicState();
+      }
     }
   });
 
@@ -201,92 +222,107 @@ export default function SequencingGameRunner({ config }: SequencingGameRunnerPro
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-8">
-        <div className="flex justify-between items-end mb-2">
-          <div>
-            <h1 className="text-xl font-bold text-gray-700 dark:text-gray-200">{config.name}</h1>
-          </div>
-          <span className="text-sm font-mono text-gray-500">
-            Nível {currentLevelIndex + 1}/{config.levels.length}
-          </span>
-        </div>
-        
-        {/* Sequence Progress Bar */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {Array.from({ length: shuffledOptions.length }).map((_, idx) => {
-            const stepNumber = idx + 1;
-            const isDone = currentStep > stepNumber;
-            return (
-              <div 
-                key={idx} 
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold shrink-0 transition-colors",
-                  isDone ? "bg-green-500 border-green-500 text-white" : "border-gray-200 text-gray-400"
-                )}
-              >
-                {stepNumber}
+    <div className="max-w-4xl mx-auto p-4 relative overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentLevelIndex}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={(transitionVariants as any)[activeTransition] || transitionVariants.fade}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <div className="mb-8">
+            <div className="flex justify-between items-end mb-2">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{config.name}</h2>
+                <p className="text-gray-500">Nível {currentLevelIndex + 1} de {config.levels.length}</p>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-400 uppercase font-bold mb-1">Passo Atual</div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {currentStep} / {shuffledOptions.length}
+                </div>
+              </div>
+            </div>
+            
+            {/* Sequence Progress Bar */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {Array.from({ length: shuffledOptions.length }).map((_, idx) => {
+                const stepNumber = idx + 1;
+                const isDone = currentStep > stepNumber;
+                return (
+                  <div 
+                    key={idx} 
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold shrink-0 transition-colors",
+                      isDone ? "bg-green-500 border-green-500 text-white" : "border-gray-200 dark:border-zinc-800 text-gray-400"
+                    )}
+                  >
+                    {stepNumber}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Options Grid */}
-      <div 
-        ref={gameContainerRef}
-        className={cn(
-          "gap-4 relative bg-white",
-          hasPositioning 
-           ? "w-full h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-zinc-800"
-           : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 min-h-[400px] p-4 rounded-xl border border-gray-200 dark:border-zinc-800"
-        )}
-        style={{ backgroundColor: currentLevel.style?.backgroundColor || '#ffffff' }}
-      >
-        {currentLevel.staticElements?.map(element => (
-           <StaticElement 
-             key={element.id} 
-             element={getMergedElement(element)} 
-             handleEvent={handleEvent}
-             executeLogic={executeLogic}
-             activeAnimation={activeAnimations[element.id]}
-             containerRef={gameContainerRef}
-           />
-        ))}
-        
-        {shuffledOptions.map((option) => {
-          const isCompleted = completedIds.includes(option.id);
-          const isWrong = wrongFeedbackId === option.id;
+          {/* Options Grid */}
+          <div 
+            ref={gameContainerRef}
+            className={cn(
+              "gap-4 relative bg-white dark:bg-zinc-950",
+              hasPositioning 
+               ? "w-full h-[600px] rounded-2xl overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-xl"
+               : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 min-h-[400px] p-6 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-xl"
+            )}
+            style={{ backgroundColor: currentLevel.style?.backgroundColor }}
+          >
+            {currentLevel.staticElements?.map(element => (
+               <StaticElement 
+                 key={element.id} 
+                 element={getMergedElement(element)} 
+                 handleEvent={handleEvent}
+                 executeLogic={executeLogic}
+                 activeAnimation={activeAnimations[element.id]}
+                 containerRef={gameContainerRef}
+               />
+            ))}
+            
+            {shuffledOptions.map((option) => {
+              const isCompleted = completedIds.includes(option.id);
+              const isWrong = wrongFeedbackId === option.id;
 
-          return (
-            <OptionButton
-              key={option.id}
-              option={option}
-              mergedOption={getMergedElement({ ...option, id: option.id, ...option.content })}
-              handleEvent={handleEvent}
-              executeLogic={executeLogic}
-              activeAnimation={activeAnimations[option.id]}
-              isAnswered={isCompleted}
-              isCorrect={isCompleted}
-              isWrong={isWrong}
-              handleOptionClick={() => handleOptionClick(option)}
-              containerRef={gameContainerRef}
-            />
-          );
-        })}
-      </div>
+              return (
+                <OptionButton
+                  key={option.id}
+                  option={option}
+                  mergedOption={getMergedElement({ ...option, id: option.id, ...option.content })}
+                  handleEvent={handleEvent}
+                  executeLogic={executeLogic}
+                  activeAnimation={activeAnimations[option.id]}
+                  isAnswered={isCompleted}
+                  isCorrect={isCompleted}
+                  isWrong={isWrong}
+                  handleOptionClick={() => handleOptionClick(option)}
+                  containerRef={gameContainerRef}
+                />
+              );
+            })}
+          </div>
 
-      {isLevelComplete && (
-         <div className="mt-8 flex justify-end animate-in fade-in slide-in-from-bottom-4">
-            <button
-              onClick={handleNextLevel}
-              className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg font-semibold"
-            >
-              {currentLevelIndex === config.levels.length - 1 ? "Finalizar" : "Próximo Nível"}
-              <ArrowRight size={20} />
-            </button>
-         </div>
-      )}
+          {currentStep > shuffledOptions.length && shuffledOptions.length > 0 && (
+            <div className="mt-8 flex justify-center animate-in fade-in zoom-in duration-300">
+              <button
+                onClick={handleNextLevel}
+                className="group flex items-center gap-3 px-10 py-4 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
+              >
+                {currentLevelIndex === config.levels.length - 1 ? "Finalizar Jogo" : "Próximo Nível"}
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

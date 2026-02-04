@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { triggerConfetti, triggerSuccessConfetti } from "@/lib/confetti";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import StaticElement from "./StaticElement";
+import { motion, AnimatePresence } from "framer-motion";
+import { transitionVariants } from "@/lib/transitions";
 
 interface MemoryCard extends Option {
   uniqueId: string; // To distinguish duplicate cards
@@ -26,6 +28,7 @@ export default function MemoryGameRunner({ config }: MemoryGameRunnerProps) {
   const [flippedCards, setFlippedCards] = useState<string[]>([]); // uniqueIds
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [activeTransition, setActiveTransition] = useState<string>('fade');
   const [score, setScore] = useState(0);
   const gameContainerRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +49,26 @@ export default function MemoryGameRunner({ config }: MemoryGameRunnerProps) {
     onGameFinished: () => {
       setIsFinished(true);
       triggerConfetti();
+    },
+    onShowSuccess: () => {
+      setScore((prev) => prev + 1);
+      triggerSuccessConfetti();
+      // For memory game, we might not want to show a separate screen mid-level
+      // but we should at least provide some feedback if requested by logic
+    },
+    onShowError: () => {
+      // Feedback for error
+    },
+    onLevelChange: (levelId, transition) => {
+      const levelIndex = config.levels.findIndex(l => l.id === levelId);
+      if (levelIndex !== -1) {
+        if (transition) setActiveTransition(transition);
+        setCurrentLevelIndex(levelIndex);
+        setCards([]);
+        setFlippedCards([]);
+        setIsProcessing(false);
+        resetLogicState();
+      }
     }
   });
 
@@ -271,160 +294,106 @@ export default function MemoryGameRunner({ config }: MemoryGameRunnerProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-8 flex justify-between items-end">
-        <div>
-           <h1 className="text-xl font-bold text-gray-700 dark:text-gray-200">{config.name}</h1>
-        </div>
-        <span className="text-sm font-mono text-gray-500">
-            Nível {currentLevelIndex + 1}/{config.levels.length}
-        </span>
-      </div>
+    <div className="max-w-4xl mx-auto p-4 relative overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentLevelIndex}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={(transitionVariants as any)[activeTransition] || transitionVariants.fade}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <div className="mb-8 flex justify-between items-end">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{config.name}</h2>
+              <p className="text-gray-500">Nível {currentLevelIndex + 1} de {config.levels.length}</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-400 uppercase font-bold mb-1">Pares Encontrados</div>
+              <div className="text-3xl font-bold text-blue-600">
+                {cards.filter(c => c.isMatched).length / 2} / {cards.length / 2}
+              </div>
+            </div>
+          </div>
 
-      <div 
-        className="relative w-full aspect-video p-4 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 overflow-hidden bg-white"
-        style={{ backgroundColor: currentLevel.style?.backgroundColor || '#ffffff' }}
-        ref={gameContainerRef}
-      >
-        {currentLevel.staticElements?.map(element => (
-           <StaticElement 
-             key={element.id} 
-             element={getMergedElement(element)} 
-             handleEvent={handleEvent}
-             executeLogic={executeLogic}
-             activeAnimation={activeAnimations[element.id]}
-             containerRef={gameContainerRef}
-           />
-        ))}
-        
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 h-full relative z-0">
-          {cards.map(card => {
-            // Merge original style with overrides
-            const mergedCard = {
-              ...card,
-              content: {
-                ...card.content,
-                style: {
-                  ...card.content.style,
-                  ...propertyOverrides[card.id]
-                }
-              }
-            };
+          <div 
+            className="relative bg-gray-50 dark:bg-zinc-950 rounded-2xl p-6 shadow-inner border border-gray-200 dark:border-zinc-800 min-h-[500px]"
+            style={{ backgroundColor: currentLevel.style?.backgroundColor }}
+            ref={gameContainerRef}
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {cards.map((card) => (
+                <button
+                  key={card.uniqueId}
+                  disabled={card.isMatched || isProcessing || card.isFlipped}
+                  onClick={() => handleCardClick(card.uniqueId)}
+                  className={cn(
+                    "aspect-square relative transition-all duration-500 preserve-3d cursor-pointer hover:scale-105",
+                    card.isFlipped || card.isMatched ? "rotate-y-180" : ""
+                  )}
+                >
+                  {/* Front (Back of card) */}
+                  <div className={cn(
+                    "absolute inset-0 bg-blue-600 rounded-xl flex items-center justify-center backface-hidden shadow-md",
+                    "border-4 border-white dark:border-zinc-800"
+                  )}>
+                    <div className="w-12 h-12 rounded-full border-2 border-white/30 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                    </div>
+                  </div>
 
-            return (
+                  {/* Back (Front of card - the content) */}
+                  <div className={cn(
+                    "absolute inset-0 bg-white dark:bg-zinc-900 rounded-xl flex flex-col items-center justify-center backface-hidden rotate-y-180 shadow-md p-2 overflow-hidden",
+                    card.isMatched ? "ring-4 ring-green-500" : "border-2 border-gray-100 dark:border-zinc-800"
+                  )}>
+                    {card.content.type === 'image' ? (
+                      <div className="relative w-full h-full">
+                        {card.content.value ? (
+                          <Image src={card.content.value} alt={card.content.name || "Card"} fill className="object-contain" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <ImageIcon size={32} />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-center font-bold text-lg text-gray-800 dark:text-gray-100">
+                        {card.content.value}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Static Elements Support */}
+            {currentLevel.staticElements?.map(element => (
+              <StaticElement 
+                key={element.id} 
+                element={getMergedElement(element)} 
+                handleEvent={() => {}} // Memory game handles its own events mostly
+                executeLogic={executeLogic}
+                activeAnimation={activeAnimations[element.id]}
+                containerRef={gameContainerRef}
+              />
+            ))}
+          </div>
+
+          {isLevelComplete && (
+            <div className="mt-8 flex justify-center animate-in fade-in zoom-in duration-300">
               <button
-                key={card.uniqueId}
-                onClick={() => handleCardClick(card.uniqueId)}
-                onMouseEnter={() => {
-                  // Legacy events
-                  if (card.content.events?.length) {
-                    card.content.events.filter(e => e.trigger === 'hover').forEach(handleEvent);
-                  }
-                  // Flow logic
-                  executeLogic('onHover', { id: card.id });
-                }}
-                className={cn(
-                  "aspect-square relative rounded-xl transition-all duration-300 transform perspective-1000",
-                  card.isFlipped || card.isMatched ? "rotate-y-180" : "bg-blue-600 hover:bg-blue-700",
-                  getAnimationClass(activeAnimations[card.id] || card.content.animation)
-                )}
-                disabled={card.isMatched}
-                 style={{
-                   cursor: (card.content.events?.length || !card.isMatched) ? 'pointer' : 'default',
-                   transform: `translate(${mergedCard.content.style?.translateX || 0}px, ${mergedCard.content.style?.translateY || 0}px)`,
-                   transition: 'transform 0.3s ease-out'
-                 }}
-               >
-              <div className={cn(
-                "absolute inset-0 flex items-center justify-center backface-hidden rounded-xl bg-white dark:bg-zinc-800 border-2",
-                card.isMatched ? "border-green-500" : "border-gray-200 dark:border-zinc-700",
-                !card.isFlipped && !card.isMatched && "hidden" // Optimization
-              )}>
-                {card.content.type === 'image' ? (
-                   <div className="relative w-full h-full p-2">
-                      {card.content.value ? (
-                        <Image src={card.content.value} alt="Card" fill className="object-contain" />
-                      ) : null}
-                   </div>
-                ) : card.content.type === 'shape' ? (
-                   <div 
-                     style={{ 
-                       width: '100%', 
-                       height: '100%', 
-                       backgroundColor: card.content.style?.backgroundColor || '#3b82f6',
-                       borderWidth: `${card.content.style?.borderWidth || 0}px`,
-                       borderColor: card.content.style?.borderColor || '#000000',
-                       borderStyle: card.content.style?.borderWidth ? 'solid' : undefined,
-                       borderRadius: card.content.value === 'circle' ? '50%' : card.content.value === 'rounded' ? '1rem' : '0',
-                       clipPath: card.content.value === 'triangle' 
-                         ? 'polygon(50% 0%, 0% 100%, 100% 100%)' 
-                         : card.content.value === 'star' 
-                         ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
-                         : undefined,
-                       display: 'flex',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       overflow: 'hidden'
-                     }}
-                     className="shadow-sm"
-                   >
-                     {card.content.text && (
-                       <span 
-                         style={{
-                           color: card.content.style?.color || '#ffffff',
-                           fontSize: card.content.style?.fontSize ? `${card.content.style.fontSize}px` : '1rem',
-                           fontFamily: card.content.style?.fontFamily,
-                           fontWeight: card.content.style?.fontWeight || 'bold',
-                           textAlign: 'center',
-                           pointerEvents: 'none',
-                           padding: '8px',
-                           width: '100%',
-                           height: '100%',
-                           display: 'flex',
-                           alignItems: 'center',
-                           justifyContent: 'center',
-                           wordBreak: 'break-word',
-                           whiteSpace: 'pre-wrap',
-                           overflow: 'hidden'
-                         }}
-                       >
-                         {card.content.text}
-                       </span>
-                     )}
-                   </div>
-                ) : (
-                   <span 
-                     className="text-xl font-bold"
-                     style={{ color: card.content.style?.color || '#000000' }}
-                   >
-                     {card.content.value}
-                   </span>
-                )}
-              </div>
-              {/* Back of card */}
-              <div className={cn(
-                "absolute inset-0 flex items-center justify-center backface-hidden rounded-xl bg-blue-600",
-                (card.isFlipped || card.isMatched) && "hidden"
-              )}>
-                 <span className="text-white text-2xl font-bold">?</span>
-              </div>
-            </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {isLevelComplete && (
-         <div className="mt-8 flex justify-end animate-in fade-in slide-in-from-bottom-4">
-            <button
-              onClick={handleNextLevel}
-              className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 shadow-lg font-semibold"
-            >
-              {currentLevelIndex === config.levels.length - 1 ? "Finalizar" : "Próximo Nível"}
-              <ArrowRight size={20} />
-            </button>
-         </div>
-      )}
+                onClick={handleNextLevel}
+                className="group flex items-center gap-3 px-10 py-4 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
+              >
+                {currentLevelIndex === config.levels.length - 1 ? "Finalizar Jogo" : "Próximo Nível"}
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

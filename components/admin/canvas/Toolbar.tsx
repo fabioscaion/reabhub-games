@@ -16,6 +16,7 @@ import {
   Palette
 } from 'lucide-react';
 import { Level, Option } from '@/types/game';
+import { generateId } from '@/lib/utils';
 
 interface ToolbarProps {
   level: Level;
@@ -49,8 +50,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const addMemoryPair = () => {
     const matchId = `pair-${Math.floor(Math.random() * 1000)}`;
-    const id1 = crypto.randomUUID();
-    const id2 = crypto.randomUUID();
+    const id1 = generateId();
+    const id2 = generateId();
     
     const opt1: Option = {
       id: id1,
@@ -82,9 +83,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const addSequenceSet = () => {
-    const id1 = crypto.randomUUID();
-    const id2 = crypto.randomUUID();
-    const id3 = crypto.randomUUID();
+    const id1 = generateId();
+    const id2 = generateId();
+    const id3 = generateId();
     
     const baseStyle = { width: 150, height: 150, backgroundColor: '#ffffff', borderWidth: 2, borderColor: '#f97316' };
 
@@ -152,7 +153,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       const y = 10 + (row * (80/rows)) + (80/rows/2);
       
       newOptions.push({
-        id: crypto.randomUUID(),
+        id: generateId(),
         content: { 
             type: 'text', 
             value: text,

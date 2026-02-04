@@ -8,7 +8,7 @@ import Link from "next/link";
 import GameMetadataForm from "./GameMetadataForm";
 import LevelManager from "./LevelManager";
 import LevelEditorModal from "./LevelEditorModal";
-import { toBase64, handleFileUpload } from "@/lib/utils";
+import { handleFileUpload, generateId } from "@/lib/utils";
 
 interface GameFormProps {
   initialData?: GameConfig;
@@ -17,7 +17,7 @@ interface GameFormProps {
 export default function GameForm({ initialData }: GameFormProps) {
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState<GameConfig>(initialData || {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+    id: generateId(),
     name: "",
     description: "",
     type: "naming",
@@ -29,9 +29,8 @@ export default function GameForm({ initialData }: GameFormProps) {
 
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (game.levels.length === 0) {
+  const handleSave = async (gameData = game) => {
+    if (gameData.levels.length === 0) {
       alert("Adicione pelo menos um nível ao jogo.");
       return;
     }
@@ -39,9 +38,9 @@ export default function GameForm({ initialData }: GameFormProps) {
     setLoading(true);
     try {
       if (initialData) {
-        await updateGameAction(game);
+        await updateGameAction(gameData);
       } else {
-        await createGameAction(game);
+        await createGameAction(gameData);
       }
     } catch (error) {
       console.error(error);
@@ -51,9 +50,14 @@ export default function GameForm({ initialData }: GameFormProps) {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSave();
+  };
+
   const addLevel = (type: 'game' | 'info' | 'menu' = 'game') => {
     const newLevel: Level = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       options: [],
       type: type
     };
@@ -70,7 +74,7 @@ export default function GameForm({ initialData }: GameFormProps) {
     const levelToDuplicate = game.levels[index];
     const newLevel: Level = {
       ...JSON.parse(JSON.stringify(levelToDuplicate)),
-      id: crypto.randomUUID(),
+      id: generateId(),
     };
     
     const newLevels = [...game.levels];
@@ -122,6 +126,13 @@ export default function GameForm({ initialData }: GameFormProps) {
           allLevels={game.levels}
           onClose={() => setEditingLevelIndex(null)}
           onUpdate={(updated) => handleLevelUpdate(editingLevelIndex, updated)}
+          onSaveGame={async (updatedLevel) => {
+            const newLevels = [...game.levels];
+            newLevels[editingLevelIndex] = updatedLevel;
+            const updatedGame = { ...game, levels: newLevels };
+            setGame(updatedGame);
+            await handleSave(updatedGame);
+          }}
         />
       )}
 

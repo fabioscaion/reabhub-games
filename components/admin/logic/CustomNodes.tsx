@@ -18,7 +18,9 @@ import {
   MousePointerClick, 
   MousePointer2,
   LogOut,
-  Target 
+  Target,
+  CheckCircle,
+  XCircle 
 } from 'lucide-react';
 
 const getNodeIcon = (type: string, subType?: string) => {
@@ -28,8 +30,11 @@ const getNodeIcon = (type: string, subType?: string) => {
     case 'onHover': return <MousePointer2 className="w-4 h-4 text-yellow-500 mr-2" />;
     case 'onBlur': return <LogOut className="w-4 h-4 text-yellow-500 mr-2" />;
     case 'onOverlap': return <Target className="w-4 h-4 text-yellow-500 mr-2" />;
+    case 'onSeparate': return <Target className="w-4 h-4 text-yellow-500 mr-2 opacity-50" />;
     case 'playSound': return <Music className="w-4 h-4 text-blue-500 mr-2" />;
     case 'goToLevel': return <ArrowRight className="w-4 h-4 text-blue-500 mr-2" />;
+    case 'goToSuccess': return <CheckCircle className="w-4 h-4 text-green-500 mr-2" />;
+    case 'goToError': return <XCircle className="w-4 h-4 text-red-500 mr-2" />;
     case 'completeLevel': return <Play className="w-4 h-4 text-blue-500 mr-2" />;
     case 'setProperty': return <Settings className="w-4 h-4 text-blue-500 mr-2" />;
     case 'move': return <Move className="w-4 h-4 text-blue-500 mr-2" />;
@@ -174,7 +179,7 @@ export const EventNode = ({ data }: any) => {
       </div>
       
       <div className="space-y-3">
-        {(data.triggerType === 'onClick' || data.triggerType === 'onHover' || data.triggerType === 'onBlur' || data.triggerType === 'onOverlap') && (
+        {(data.triggerType === 'onClick' || data.triggerType === 'onHover' || data.triggerType === 'onBlur' || data.triggerType === 'onOverlap' || data.triggerType === 'onSeparate') && (
           <div>
             <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Elemento Origem</label>
             <select 
@@ -190,9 +195,11 @@ export const EventNode = ({ data }: any) => {
           </div>
         )}
 
-        {data.triggerType === 'onOverlap' && (
+        {(data.triggerType === 'onOverlap' || data.triggerType === 'onSeparate') && (
           <div>
-            <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Ao encostar em</label>
+            <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">
+              {data.triggerType === 'onOverlap' ? 'Ao encostar em' : 'Ao desencostar de'}
+            </label>
             <select 
               className="w-full text-xs p-1.5 rounded border border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
               value={data.targetElementId || ''}
@@ -406,15 +413,49 @@ export const ActionNode = ({ data }: any) => {
         )}
 
         {data.actionType === 'goToLevel' && (
-           <div>
-             <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Nível Alvo</label>
-             <input 
-               type="text"
-               placeholder="ID do Nível"
-               className="w-full text-xs p-1.5 rounded border border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
-               value={data.value || ''}
-               onChange={(e) => data.onDataChange?.({ value: e.target.value })}
-             />
+           <div className="space-y-3">
+             <div>
+               <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Nível Alvo</label>
+               <select 
+                 className="w-full text-xs p-1.5 rounded border border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                 value={data.value || ''}
+                 onChange={(e) => data.onDataChange?.({ value: e.target.value })}
+               >
+                 <option value="">Selecione o nível...</option>
+                 {(data.availableLevels || []).map((level: any) => (
+                   <option key={level.id} value={level.id}>{level.name}</option>
+                 ))}
+               </select>
+             </div>
+             <div>
+               <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Transição</label>
+               <select 
+                 className="w-full text-xs p-1.5 rounded border border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                 value={data.transition || 'fade'}
+                 onChange={(e) => data.onDataChange?.({ transition: e.target.value })}
+               >
+                 <option value="none">Nenhuma</option>
+                 <option value="fade">Esmaecer (Fade)</option>
+                 <option value="slide-left">Deslizar para Esquerda</option>
+                 <option value="slide-right">Deslizar para Direita</option>
+                 <option value="slide-up">Deslizar para Cima</option>
+                 <option value="slide-down">Deslizar para Baixo</option>
+                 <option value="zoom">Zoom</option>
+                 <option value="flip">Giro (Flip)</option>
+               </select>
+             </div>
+           </div>
+        )}
+
+        {data.actionType === 'goToSuccess' && (
+           <div className="text-[10px] text-gray-400 bg-gray-50 dark:bg-zinc-900 p-2 rounded border border-gray-100 dark:border-zinc-700 italic">
+             Transição direta para a tela de sucesso deste nível.
+           </div>
+        )}
+
+        {data.actionType === 'goToError' && (
+           <div className="text-[10px] text-gray-400 bg-gray-50 dark:bg-zinc-900 p-2 rounded border border-gray-100 dark:border-zinc-700 italic">
+             Transição direta para a tela de erro deste nível.
            </div>
         )}
       </div>

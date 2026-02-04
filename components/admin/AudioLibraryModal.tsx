@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Mic, Square, Play, Trash2, Check, Music, Upload, RotateCcw } from "lucide-react";
-import { processFiles } from "@/lib/utils";
+import { processFiles, generateId } from "@/lib/utils";
 
 interface AudioLibraryModalProps {
   isOpen: boolean;
@@ -98,7 +98,7 @@ export default function AudioLibraryModal({ isOpen, onClose, onSelect, initialAu
     reader.onloadend = () => {
       const base64 = reader.result as string;
       const newAudio = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         value: base64,
         name: `Gravação ${new Date().toLocaleTimeString()}`
       };
@@ -111,7 +111,7 @@ export default function AudioLibraryModal({ isOpen, onClose, onSelect, initialAu
   const handleFileUpload = async (files: FileList | null) => {
     await processFiles(files, 'audio/', (base64) => {
       const newAudio = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         value: base64,
         name: `Upload ${audios.length + 1}`
       };

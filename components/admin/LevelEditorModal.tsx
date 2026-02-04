@@ -11,6 +11,7 @@ interface LevelEditorModalProps {
   allLevels: Level[];
   onClose: () => void;
   onUpdate: (updated: Level) => void;
+  onSaveGame?: (updatedLevel: Level) => Promise<void>;
 }
 
 export default function LevelEditorModal({ 
@@ -19,7 +20,8 @@ export default function LevelEditorModal({
   gameType, 
   allLevels, 
   onClose, 
-  onUpdate 
+  onUpdate,
+  onSaveGame
 }: LevelEditorModalProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col animate-in fade-in duration-200">
@@ -28,6 +30,7 @@ export default function LevelEditorModal({
           <GameCanvas 
             level={level} 
             onChange={onUpdate} 
+            onSaveGame={onSaveGame}
             gameType={gameType as any}
             allLevels={allLevels}
             onClose={onClose}
