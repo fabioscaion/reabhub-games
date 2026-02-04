@@ -119,3 +119,35 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: 'Falha ao excluir mídia' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  try {
+    const { id, folderId, name } = await req.json();
+
+    const media = await prisma.media.findUnique({
+      where: { id, userId: session.user.id },
+    });
+
+    if (!media) {
+      return NextResponse.json({ error: 'Mídia não encontrada' }, { status: 404 });
+    }
+
+    const updatedMedia = await prisma.media.update({
+      where: { id },
+      data: {
+        ...(folderId !== undefined ? { folderId } : {}),
+        ...(name !== undefined ? { name } : {}),
+      },
+    });
+
+    return NextResponse.json(updatedMedia);
+  } catch (error) {
+    console.error('Erro ao atualizar mídia:', error);
+    return NextResponse.json({ error: 'Falha ao atualizar mídia' }, { status: 500 });
+  }
+}

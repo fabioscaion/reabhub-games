@@ -55,6 +55,8 @@ export default function MediaModal({
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
+  const [draggedMediaId, setDraggedMediaId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -266,6 +268,33 @@ export default function MediaModal({
       alert('Erro ao excluir mídia');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleMoveToFolder = async (mediaId: string, folderId: string | null) => {
+    try {
+      const response = await fetch('/api/media', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: mediaId, folderId }),
+      });
+
+      if (response.ok) {
+        // Se estivermos em uma pasta específica (que não seja "Tudo"), removemos o item da lista
+        if (selectedFolderId !== 'all') {
+          setMediaItems(prev => prev.filter(item => item.id !== mediaId));
+        } else {
+          // Se estivermos em "Tudo", apenas atualizamos o folderId do item
+          setMediaItems(prev => prev.map(item => 
+            item.id === mediaId ? { ...item, folderId } : item
+          ));
+        }
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao mover mídia');
+      }
+    } catch (error) {
+      console.error('Erro ao mover mídia:', error);
     }
   };
 
@@ -493,10 +522,24 @@ export default function MediaModal({
                 <button
                   type="button"
                   onClick={() => setSelectedFolderId('root')}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverFolderId('root');
+                  }}
+                  onDragLeave={() => setDragOverFolderId(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverFolderId(null);
+                    if (draggedMediaId) {
+                      handleMoveToFolder(draggedMediaId, null);
+                    }
+                  }}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                     selectedFolderId === 'root' 
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium' 
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                      : dragOverFolderId === 'root'
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300 ring-2 ring-blue-500'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
                   }`}
                 >
                   <ChevronRight size={16} />
@@ -522,10 +565,24 @@ export default function MediaModal({
                       <button
                         type="button"
                         onClick={() => setSelectedFolderId(folder.id)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverFolderId(folder.id);
+                        }}
+                        onDragLeave={() => setDragOverFolderId(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverFolderId(null);
+                          if (draggedMediaId) {
+                            handleMoveToFolder(draggedMediaId, folder.id);
+                          }
+                        }}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors pr-8 ${
                           selectedFolderId === folder.id 
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                            : dragOverFolderId === folder.id
+                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300 ring-2 ring-blue-500'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
                         }`}
                       >
                         <Folder size={16} />
@@ -589,7 +646,13 @@ export default function MediaModal({
                 mediaItems.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {mediaItems.map((item) => (
-                      <div key={item.id} className="group relative aspect-square">
+                      <div 
+                        key={item.id} 
+                        className="group relative aspect-square"
+                        draggable
+                        onDragStart={() => setDraggedMediaId(item.id)}
+                        onDragEnd={() => setDraggedMediaId(null)}
+                      >
                         <button
                           type="button"
                           onClick={() => onSelect(item.url)}
@@ -622,7 +685,10 @@ export default function MediaModal({
                     {mediaItems.map((item) => (
                       <div 
                         key={item.id}
-                        className="flex items-center gap-3 p-3 border border-gray-200 dark:border-zinc-800 rounded-lg bg-gray-50 dark:bg-zinc-800/50 hover:border-blue-500 transition-all group relative"
+                        className="flex items-center gap-3 p-3 border border-gray-200 dark:border-zinc-800 rounded-lg bg-gray-50 dark:bg-zinc-800/50 hover:border-blue-500 transition-all group relative cursor-move"
+                        draggable
+                        onDragStart={() => setDraggedMediaId(item.id)}
+                        onDragEnd={() => setDraggedMediaId(null)}
                       >
                         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
                           <Music size={18} />
