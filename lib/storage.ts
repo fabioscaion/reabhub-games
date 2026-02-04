@@ -30,20 +30,31 @@ export async function uploadToGCS(
 
   const file = bucket.file(filename);
   
-  try {
-    await file.save(buffer, {
+  return new Promise((resolve, reject) => {
+    const stream = file.createWriteStream({
       metadata: {
         contentType: contentType,
       },
-      resumable: true, // Use resumable for better stability in some environments
+      resumable: false, // Disabling resumable for simple buffer uploads to avoid stream issues
     });
-  } catch (err) {
-    console.error('GCS Save Error:', err);
-    throw err;
-  }
 
-  // Return the public URL
-  return `https://storage.googleapis.com/${bucketName}/${filename}`;
+    stream.on('error', (err) => {
+      console.error('GCS Upload Stream Error:', err);
+      reject(err);
+    });
+
+    stream.on('finish', () => {
+      resolve(`https://storage.googleapis.com/${bucketName}/${filename}`);
+    });
+
+    // Handle stream destruction
+    if (stream.destroyed) {
+      reject(new Error('Stream was destroyed before write could start'));
+      return;
+    }
+
+    stream.end(buffer);
+  });
 }
 
 export async function deleteFromGCS(filename: string): Promise<void> {

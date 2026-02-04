@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Upload, Image as ImageIcon, Check, Music, Mic, Square, Play, RotateCcw, Loader2, Trash2, Folder, FolderPlus, MoreVertical, Edit2, ChevronRight, FolderOpen } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Check, Music, Mic, Square, Play, RotateCcw, Loader2, Trash2, Folder, FolderPlus, MoreVertical, Edit2, ChevronRight, FolderOpen, Scissors } from "lucide-react";
 import Image from "next/image";
+import AudioEditorModal from "./AudioEditorModal";
 
 interface Media {
   id: string;
@@ -40,6 +41,7 @@ export default function MediaModal({
   const [mediaItems, setMediaItems] = useState<Media[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [editingAudio, setEditingAudio] = useState<Media | null>(null);
 
   // Folders state
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -259,6 +261,40 @@ export default function MediaModal({
       alert('Erro ao excluir mídia');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleSaveEditedAudio = async (blob: Blob, newName: string) => {
+    setIsLoading(true);
+    try {
+      const file = new File([blob], newName, { type: blob.type });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', 'audio');
+      formData.append('name', newName);
+      if (selectedFolderId && selectedFolderId !== 'all') {
+        formData.append('folderId', selectedFolderId);
+      }
+
+      const response = await fetch('/api/media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const newMedia = await response.json();
+        if (selectedFolderId === 'all' || selectedFolderId === newMedia.folderId || (selectedFolderId === 'root' && !newMedia.folderId)) {
+          setMediaItems(prev => [newMedia, ...prev]);
+        }
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao salvar áudio editado');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar áudio editado:', error);
+      alert('Erro ao salvar áudio editado');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -584,6 +620,16 @@ export default function MediaModal({
                             <Check size={18} />
                           </button>
                           <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingAudio(item);
+                            }}
+                            className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                            title="Editar Áudio"
+                          >
+                            <Scissors size={18} />
+                          </button>
+                          <button
                             onClick={(e) => handleDeleteMedia(e, item)}
                             disabled={deletingId === item.id}
                             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
@@ -724,7 +770,18 @@ export default function MediaModal({
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-}
+       )}
+
+       {/* Modal de Edição de Áudio */}
+       {editingAudio && (
+         <AudioEditorModal
+           isOpen={!!editingAudio}
+           onClose={() => setEditingAudio(null)}
+           audioUrl={editingAudio.url}
+           originalName={editingAudio.name}
+           onSave={handleSaveEditedAudio}
+         />
+       )}
+     </div>
+   );
+ }
