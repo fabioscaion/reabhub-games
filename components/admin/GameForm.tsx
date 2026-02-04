@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GameConfig, GameType, Level } from "@/types/game";
 import { createGameAction, updateGameAction } from "@/actions/game-actions";
-import { Save } from "lucide-react";
+import { Save, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import GameMetadataForm from "./GameMetadataForm";
 import LevelManager from "./LevelManager";
 import LevelEditorModal from "./LevelEditorModal";
 import { handleFileUpload, generateId } from "@/lib/utils";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
 interface GameFormProps {
   initialData?: GameConfig;
@@ -16,35 +17,81 @@ interface GameFormProps {
 
 export default function GameForm({ initialData }: GameFormProps) {
   const [loading, setLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error" | "info"; title: string; message: string } | null>(null);
   const [game, setGame] = useState<GameConfig>(initialData || {
     id: generateId(),
-    name: "",
-    description: "",
+    name: "Novo Jogo",
+    description: "Descrição do novo jogo",
     type: "naming",
     category: "Linguagem Expressiva",
     coverImage: "",
+    status: "draft",
     levels: [],
     isPublic: false
   });
+
+  // Effect to create game immediately if it's a new game
+  useEffect(() => {
+    if (!initialData) {
+      const createInitialGame = async () => {
+        try {
+          console.log("CREATING INITIAL GAME:", game.id);
+          await createGameAction(game, false); // false to avoid redirect
+          console.log("INITIAL GAME CREATED SUCCESSFULLY");
+        } catch (error: any) {
+          console.error("ERRO DETALHADO AO CRIAR JOGO INICIAL:", error);
+          if (error.message?.includes("User with ID") || error.message?.includes("Não autorizado")) {
+            setFeedback({
+              type: "error",
+              title: "Sessão Inválida",
+              message: "Sua sessão parece estar inválida ou o usuário não existe no banco de dados. Por favor, faça logout e login novamente no ReabHub."
+            });
+          }
+        }
+      };
+      createInitialGame();
+    }
+  }, []); // Only once on mount
 
   const [editingLevelIndex, setEditingLevelIndex] = useState<number | null>(null);
 
   const handleSave = async (gameData = game) => {
     if (gameData.levels.length === 0) {
-      alert("Adicione pelo menos um nível ao jogo.");
+      setFeedback({
+        type: "info",
+        title: "Níveis Ausentes",
+        message: "Adicione pelo menos um nível ao jogo antes de salvar."
+      });
       return;
     }
     
     setLoading(true);
+    setSaveSuccess(false);
     try {
       if (initialData) {
         await updateGameAction(gameData);
       } else {
         await createGameAction(gameData);
       }
+      
+      setSaveSuccess(true);
+      setFeedback({
+        type: "success",
+        title: "Jogo Salvo",
+        message: "As alterações foram salvas com sucesso no banco de dados."
+      });
+      
+      // Reset success state after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+      
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar jogo");
+      setFeedback({
+        type: "error",
+        title: "Erro ao Salvar",
+        message: "Ocorreu um problema ao tentar salvar as alterações do jogo."
+      });
     } finally {
       setLoading(false);
     }
@@ -143,15 +190,39 @@ export default function GameForm({ initialData }: GameFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 font-medium"
+          className={`flex items-center gap-2 px-6 py-2 rounded-md font-medium transition-all ${
+            saveSuccess 
+              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800" 
+              : "bg-green-600 text-white hover:bg-green-700 active:scale-95"
+          } disabled:opacity-50`}
         >
-          {loading ? "Salvando..." : (
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Salvando...
+            </span>
+          ) : saveSuccess ? (
+            <>
+              <CheckCircle2 size={18} /> Salvo!
+            </>
+          ) : (
             <>
               <Save size={18} /> Salvar Jogo
             </>
           )}
         </button>
       </div>
+
+      {/* Feedback Modal */}
+      {feedback && (
+        <FeedbackModal
+          isOpen={!!feedback}
+          onClose={() => setFeedback(null)}
+          type={feedback.type}
+          title={feedback.title}
+          message={feedback.message}
+        />
+      )}
     </form>
   );
 }

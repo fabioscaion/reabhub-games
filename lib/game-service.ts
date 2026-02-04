@@ -2,15 +2,21 @@ import { prisma } from './prisma';
 import { GameConfig } from "@/types/game";
 import { Prisma } from '@prisma/client';
 
-export async function getAllGames(organizationId?: string): Promise<GameConfig[]> {
+export async function getAllGames(organizationId?: string, includeDrafts = false): Promise<GameConfig[]> {
   try {
+    const where: Prisma.GameWhereInput = {
+      OR: [
+        { isPublic: true },
+        ...(organizationId ? [{ organizationId }] : []),
+      ],
+    };
+
+    if (!includeDrafts) {
+      where.status = 'published';
+    }
+
     const games = await prisma.game.findMany({
-      where: {
-        OR: [
-          { isPublic: true },
-          ...(organizationId ? [{ organizationId }] : []),
-        ],
-      },
+      where,
       orderBy: {
         updatedAt: 'desc',
       },
@@ -26,6 +32,7 @@ export async function getAllGames(organizationId?: string): Promise<GameConfig[]
         type: game.type as any,
         category: game.category,
         coverImage: game.coverImage || undefined,
+        status: (game.status as 'draft' | 'published') || 'draft',
         isPublic: game.isPublic,
         userId: game.userId,
         organizationId: game.organizationId,
@@ -59,6 +66,7 @@ export async function getGameConfig(id: string, organizationId?: string): Promis
       type: game.type as any,
       category: game.category,
       coverImage: game.coverImage || undefined,
+      status: (game.status as 'draft' | 'published') || 'draft',
       isPublic: game.isPublic,
       userId: game.userId,
       organizationId: game.organizationId,
@@ -70,8 +78,12 @@ export async function getGameConfig(id: string, organizationId?: string): Promis
 }
 
 export async function saveGame(game: GameConfig & { userId: string, organizationId: string, isPublic?: boolean }): Promise<void> {
-  const { id, name, description, type, category, coverImage, userId, organizationId, isPublic, levels, ...rest } = game;
+  const { id, name, description, type, category, coverImage, status, userId, organizationId, isPublic, levels, ...rest } = game;
   
+  if (!userId || !organizationId) {
+    throw new Error(`Cannot save game without userId (${userId}) or organizationId (${organizationId})`);
+  }
+
   const config = { levels, ...rest } as unknown as Prisma.InputJsonValue;
 
   await prisma.game.upsert({
@@ -82,6 +94,7 @@ export async function saveGame(game: GameConfig & { userId: string, organization
       type,
       category,
       coverImage,
+      status: status || 'draft',
       config,
       isPublic: isPublic ?? false,
       userId,
@@ -94,10 +107,20 @@ export async function saveGame(game: GameConfig & { userId: string, organization
       type,
       category,
       coverImage,
+      status: status || 'draft',
       config,
       isPublic: isPublic ?? false,
       userId,
       organizationId,
+    },
+  });
+}
+
+export async function deleteGame(id: string, organizationId: string): Promise<void> {
+  await prisma.game.delete({
+    where: {
+      id,
+      organizationId, // Garantir que só deleta se for da mesma organização
     },
   });
 }

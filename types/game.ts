@@ -89,6 +89,7 @@ export interface GameConfig {
   type: GameType;
   category: string;
   coverImage?: string;
+  status: 'draft' | 'published';
   levels: Level[];
   isPublic?: boolean;
   userId?: string;

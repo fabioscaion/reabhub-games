@@ -1,81 +1,68 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "./prisma";
+import { cookies } from "next/headers";
+import { decode } from "next-auth/jwt";
+import { NextResponse } from "next/server";
 
-const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
+export interface Session {
+  user: {
+    id: string;
+    name?: string;
+    email?: string;
+    organizationId: string;
+  };
+}
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
-        });
+export async function auth(): Promise<Session | null> {
+  const cookieStore = await cookies();
+  
+  const cookieName = process.env.NODE_ENV === "production" 
+    ? `__Secure-authjs.session-token` 
+    : `authjs.session-token`;
+    
+  const sessionToken = cookieStore.get(cookieName)?.value;
 
-        if (user && user.password === credentials.password) {
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            organizationId: user.organizationId,
-          };
-        }
-        
-        return null;
-      }
-    }),
-  ],
-  callbacks: {
-    async session({ session, token }) {
-      if (token && session.user) {
-        (session.user as any).id = token.sub;
-        (session.user as any).organizationId = token.organizationId;
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id;
-        token.organizationId = (user as any).organizationId;
-      } else if (token.sub && !token.organizationId) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub as string },
-          select: { organizationId: true }
-        });
-        if (dbUser) {
-          token.organizationId = dbUser.organizationId;
-        }
-      }
-      return token;
-    }
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 dias
-  },
-  cookies: {
-    sessionToken: {
-      name: process.env.NODE_ENV === "production" ? `__Secure-authjs.session-token` : `authjs.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === "production",
-        domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN === 'localhost' 
-          ? undefined 
-          : (process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined)
-      },
-    }
-  },
-  pages: {
-    // signIn: process.env.NEXT_PUBLIC_MAIN_APP_LOGIN_URL || '/login', 
+  if (!sessionToken) {
+    return null;
   }
-});
+
+  try {
+    const decoded = await decode({
+      token: sessionToken,
+      secret: process.env.NEXTAUTH_SECRET!,
+      salt: cookieName,
+    });
+
+    if (!decoded || !decoded.sub) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: decoded.sub as string,
+        name: decoded.name as string,
+        email: decoded.email as string,
+        organizationId: decoded.organizationId as string,
+      },
+    };
+  } catch (error) {
+    console.error("Erro ao validar sessão:", error);
+    return null;
+  }
+}
+
+// Handler para suportar o useSession no cliente sem precisar do NextAuth completo
+export const handlers = {
+  GET: async (req: Request) => {
+    const url = new URL(req.url);
+    if (url.pathname.endsWith("/session")) {
+      const session = await auth();
+      return NextResponse.json(session || {});
+    }
+    return NextResponse.json({});
+  },
+  POST: async () => {
+    return NextResponse.json({});
+  }
+};
+
+export const signIn = () => {};
+export const signOut = () => {};

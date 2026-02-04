@@ -1,18 +1,18 @@
 import { getAllGames } from "@/lib/game-service";
 import CategoryRow from "@/components/ui/CategoryRow";
 import { GameConfig } from "@/types/game";
-import { Gamepad2, Plus } from "lucide-react";
+import { Gamepad2, Plus, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import UserMenu from "@/components/ui/UserMenu";
 
 export default async function Home() {
   const session = await auth();
-  const organizationId = (session?.user as any)?.organizationId;
+  const organizationId = session?.user?.organizationId;
 
   console.log("Session:", session);
   
-  const games = await getAllGames(organizationId);
+  const games = await getAllGames(organizationId, false); // false para ocultar rascunhos na home
 
   // Group games by category
   const categories: Record<string, GameConfig[]> = {};
@@ -34,6 +34,13 @@ export default async function Home() {
             <span>ReabHub<span className="text-red-500">Games</span></span>
           </div>
           <div className="ml-auto flex items-center gap-4">
+            <Link 
+              href="/admin/games" 
+              className="hidden md:flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors mr-2"
+            >
+              <LayoutGrid size={16} />
+              <span>Meus Jogos</span>
+            </Link>
             <Link 
               href="/create" 
               className="hidden md:flex items-center gap-2 text-sm font-medium bg-zinc-800 text-zinc-100 px-4 py-2 rounded-full hover:bg-zinc-700 transition-colors border border-zinc-700"

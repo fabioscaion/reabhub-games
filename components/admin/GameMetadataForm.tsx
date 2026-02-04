@@ -109,6 +109,36 @@ export default function GameMetadataForm({ game, setGame, handleFileUpload }: Ga
           </div>
 
           <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status do Jogo</label>
+            <div className="flex gap-4">
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  checked={game.status === 'draft'}
+                  onChange={() => setGame({ ...game, status: 'draft' })}
+                  className="sr-only peer"
+                />
+                <div className="p-3 text-center rounded-lg border border-gray-300 dark:border-zinc-700 peer-checked:bg-gray-100 dark:peer-checked:bg-zinc-800 peer-checked:border-gray-500 peer-checked:text-gray-700 dark:peer-checked:text-gray-300 transition-all font-medium">
+                  Rascunho
+                </div>
+              </label>
+              <label className="flex-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="status"
+                  checked={game.status === 'published'}
+                  onChange={() => setGame({ ...game, status: 'published' })}
+                  className="sr-only peer"
+                />
+                <div className="p-3 text-center rounded-lg border border-gray-300 dark:border-zinc-700 peer-checked:bg-green-50 dark:peer-checked:bg-green-900/20 peer-checked:border-green-500 peer-checked:text-green-600 dark:peer-checked:text-green-400 transition-all font-medium">
+                  Publicado
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visibilidade</label>
             <div className="flex gap-4">
               <label className="flex-1 cursor-pointer">

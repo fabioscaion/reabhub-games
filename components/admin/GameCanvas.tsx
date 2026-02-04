@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Level, Option, Asset, GameType, DragItem } from "@/types/game";
-import { Play, ArrowLeft, Save } from "lucide-react";
+import { Play, ArrowLeft, Save, CheckCircle2, Loader2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import LogicEditor from './logic/LogicEditor';
 import ImageLibraryModal from "./ImageLibraryModal";
 import AudioLibraryModal from "./AudioLibraryModal";
@@ -57,6 +58,37 @@ export default function GameCanvas({
   }, [editingView, level.successScreen, level.errorScreen, level.staticElements]);
 
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+  
+  const handleSaveLevel = async () => {
+    if (!onSaveGame) return;
+    
+    setIsSaving(true);
+    try {
+      await onSaveGame(level);
+      setSnackbar({
+        show: true,
+        message: 'Nível salvo com sucesso!',
+        type: 'success'
+      });
+      setTimeout(() => setSnackbar(prev => ({ ...prev, show: false })), 3000);
+    } catch (error) {
+      console.error("Erro ao salvar nível:", error);
+      setSnackbar({
+        show: true,
+        message: 'Erro ao salvar o nível. Tente novamente.',
+        type: 'error'
+      });
+      setTimeout(() => setSnackbar(prev => ({ ...prev, show: false })), 4000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   // Zoom and Pan state
   const [zoom, setZoom] = useState(1);
@@ -326,14 +358,21 @@ export default function GameCanvas({
             <span>PREVISUALIZAR</span>
           </button>
           
-          {onClose && (
+          {onSaveGame && (
             <button 
               type="button"
-              onClick={onClose}
-              className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 group"
+              onClick={handleSaveLevel}
+              disabled={isSaving}
+              className={`flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 group disabled:opacity-70 disabled:scale-100 ${
+                isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+              }`}
             >
-              <Save size={18} />
-              <span>SALVAR NÍVEL</span>
+              {isSaving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )}
+              <span>{isSaving ? 'SALVANDO...' : 'SALVAR NÍVEL'}</span>
             </button>
           )}
         </div>
@@ -477,6 +516,37 @@ export default function GameCanvas({
         ]}
       />
     )}
+
+    {/* Snackbar / Toast Notification */}
+    <AnimatePresence>
+      {snackbar.show && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200]"
+        >
+          <div className={`flex items-center gap-3 px-6 py-3 rounded-xl shadow-2xl border ${
+            snackbar.type === 'success' 
+              ? 'bg-white dark:bg-zinc-900 border-green-100 dark:border-green-900/30 text-green-600 dark:text-green-400' 
+              : 'bg-white dark:bg-zinc-900 border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400'
+          }`}>
+            {snackbar.type === 'success' ? (
+              <CheckCircle2 size={20} className="text-green-500" />
+            ) : (
+              <X size={20} className="text-red-500" />
+            )}
+            <span className="font-medium">{snackbar.message}</span>
+            <button 
+              onClick={() => setSnackbar(prev => ({ ...prev, show: false }))}
+              className="ml-4 p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+            >
+              <X size={14} className="text-gray-400" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
     </div>
   );
 }
