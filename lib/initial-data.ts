@@ -10,6 +10,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Nomeie os animais corretamente.",
     type: "naming",
     category: "Linguagem Expressiva",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -49,6 +50,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Identifique a ação correta.",
     type: "naming",
     category: "Linguagem Expressiva",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -87,6 +89,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Como a pessoa está se sentindo?",
     type: "naming",
     category: "Linguagem Expressiva",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1542596594-649edbc13630?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -127,6 +130,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Leia a palavra e clique na imagem correta.",
     type: "comprehension",
     category: "Compreensão Visual",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -156,6 +160,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Identifique as cores solicitadas.",
     type: "comprehension",
     category: "Compreensão Visual",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1502691876148-a84978e59af8?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -185,6 +190,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Diferencie os tamanhos.",
     type: "comprehension",
     category: "Compreensão Visual",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1516981879613-9f5da904015f?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -207,6 +213,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "O que rima com a imagem?",
     type: "association",
     category: "Processamento Fonológico",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1503919005314-30d93d07d823?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -243,6 +250,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Com qual letra começa?",
     type: "association",
     category: "Processamento Fonológico",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -263,6 +271,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Identifique a sílaba tônica.",
     type: "comprehension",
     category: "Processamento Fonológico",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1453906971074-ce568cccbc63?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -285,6 +294,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Associe os itens que pertencem ao mesmo grupo.",
     type: "association",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -310,6 +320,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Qual item pertence à categoria?",
     type: "association",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1610847038753-e3805d4f3b82?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -331,6 +342,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Descubra qual não pertence ao grupo.",
     type: "association",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1599508704512-2f19efd1e35f?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -352,6 +364,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Onde estava o objeto?",
     type: "association",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -374,6 +387,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Coloque as fases do crescimento da planta na ordem correta.",
     type: "sequencing",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=500&q=80",
     levels: [
       {
@@ -395,6 +409,7 @@ export const MOCK_GAMES: Record<string, GameConfig> = {
     description: "Encontre os pares dos animais.",
     type: "memory",
     category: "Habilidades Cognitivas",
+    status: "published",
     coverImage: "https://images.unsplash.com/photo-1560807707-8cc77767d783?auto=format&fit=crop&w=500&q=80",
     levels: [
       {

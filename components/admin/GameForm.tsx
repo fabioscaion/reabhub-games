@@ -9,7 +9,7 @@ import Link from "next/link";
 import GameMetadataForm from "./GameMetadataForm";
 import LevelManager from "./LevelManager";
 import LevelEditorModal from "./LevelEditorModal";
-import { handleFileUpload, generateId } from "@/lib/utils";
+import { generateId } from "@/lib/utils";
 import FeedbackModal from "@/components/ui/FeedbackModal";
 
 interface GameFormProps {
@@ -169,7 +169,6 @@ export default function GameForm({ initialData }: GameFormProps) {
           <GameMetadataForm 
             game={game} 
             setGame={setGame} 
-            handleFileUpload={handleFileUpload} 
           />
 
           <LevelManager 

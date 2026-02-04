@@ -2,14 +2,17 @@
 
 import { GameConfig, GameType } from "@/types/game";
 import { Upload, X, ImageIcon, Gamepad2 } from "lucide-react";
+import { useState } from "react";
+import MediaModal from "./MediaModal";
 
 interface GameMetadataFormProps {
   game: GameConfig;
   setGame: (game: GameConfig) => void;
-  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>, onSuccess: (base64: string) => void) => void;
 }
 
-export default function GameMetadataForm({ game, setGame, handleFileUpload }: GameMetadataFormProps) {
+export default function GameMetadataForm({ game, setGame }: GameMetadataFormProps) {
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+
   return (
     <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-4">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm overflow-hidden">
@@ -95,18 +98,27 @@ export default function GameMetadataForm({ game, setGame, handleFileUpload }: Ga
                     placeholder="URL da imagem..."
                   />
                 </div>
-                <label className="cursor-pointer px-3 py-2 bg-gray-100 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsMediaModalOpen(true)}
+                  className="px-3 py-2 bg-gray-100 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors shrink-0"
+                >
                   <Upload size={16} />
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={(e) => handleFileUpload(e, (base64) => setGame({ ...game, coverImage: base64 }))}
-                  />
-                </label>
+                  Escolher
+                </button>
               </div>
             </div>
           </div>
+
+          <MediaModal
+            isOpen={isMediaModalOpen}
+            onClose={() => setIsMediaModalOpen(false)}
+            onSelect={(url) => {
+              setGame({ ...game, coverImage: url });
+              setIsMediaModalOpen(false);
+            }}
+            type="image"
+          />
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status do Jogo</label>

@@ -154,10 +154,8 @@ export default function MediaModal({
     if (!confirm('Tem certeza que deseja excluir esta pasta? As mídias dentro dela não serão excluídas, apenas ficarão sem pasta.')) return;
 
     try {
-      const response = await fetch('/api/media/folders', {
+      const response = await fetch(`/api/media/folders?id=${folderId}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: folderId }),
       });
 
       if (response.ok) {

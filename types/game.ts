@@ -3,7 +3,7 @@ export type GameType = 'naming' | 'comprehension' | 'association' | 'sequencing'
 export interface GameEvent {
   trigger: 'click' | 'hover' | 'onOverlap' | 'onSeparate';
   action: 'playSound' | 'goToLevel' | 'goToSuccess' | 'goToError';
-  value: string; // Audio base64/URL or Level ID
+  value: string; // Audio URL or Level ID
   transition?: 'none' | 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'zoom' | 'flip';
 }
 
