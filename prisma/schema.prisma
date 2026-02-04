@@ -38,10 +38,27 @@ model Media {
   type           String      // 'image' | 'audio'
   userId         String
   organizationId String?
+  folderId       String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
+  folder         MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
   games          GameMedia[]
+
+  @@index([userId])
+  @@index([folderId])
+}
+
+model MediaFolder {
+  id             String      @id @default(uuid())
+  name           String
+  type           String      // 'image' | 'audio' - to separate folders by media type
+  userId         String
+  organizationId String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  media          Media[]
 
   @@index([userId])
 }

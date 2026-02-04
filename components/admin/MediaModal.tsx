@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Upload, Image as ImageIcon, Check, Music, Mic, Square, Play, RotateCcw, Loader2, Trash2 } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Check, Music, Mic, Square, Play, RotateCcw, Loader2, Trash2, Folder, FolderPlus, MoreVertical, Edit2, ChevronRight, FolderOpen } from "lucide-react";
 import Image from "next/image";
 
 interface Media {
   id: string;
   url: string;
+  name: string;
+  type: string;
+  folderId: string | null;
+}
+
+interface MediaFolder {
+  id: string;
   name: string;
   type: string;
 }
@@ -32,6 +39,14 @@ export default function MediaModal({
   const [isLoading, setIsLoading] = useState(false);
   const [mediaItems, setMediaItems] = useState<Media[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Folders state
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string>('all'); // 'all', 'root', or folderId
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState('');
   
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -42,11 +57,30 @@ export default function MediaModal({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Fetch folders
+  const fetchFolders = async () => {
+    try {
+      const response = await fetch(`/api/media/folders?type=${type}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFolders(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar pastas:', error);
+    }
+  };
+
   // Fetch media from API
-  const fetchMedia = async () => {
+  const fetchMedia = async (folderId?: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/media?type=${type}`);
+      let url = `/api/media?type=${type}`;
+      const fId = folderId || selectedFolderId;
+      if (fId !== 'all') {
+        url += `&folderId=${fId}`;
+      }
+      
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setMediaItems(data);
@@ -62,9 +96,80 @@ export default function MediaModal({
   useEffect(() => {
     if (isOpen) {
       setActiveTab('gallery');
-      fetchMedia();
+      setSelectedFolderId('all');
+      fetchFolders();
+      fetchMedia('all');
     }
   }, [isOpen, type]);
+
+  // Fetch media when selected folder changes
+  useEffect(() => {
+    if (isOpen && activeTab === 'gallery') {
+      fetchMedia();
+    }
+  }, [selectedFolderId]);
+
+  const handleCreateFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFolderName.trim()) return;
+
+    try {
+      const response = await fetch('/api/media/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newFolderName, type }),
+      });
+
+      if (response.ok) {
+        const folder = await response.json();
+        setFolders(prev => [...prev, folder]);
+        setNewFolderName('');
+        setIsCreatingFolder(false);
+      }
+    } catch (error) {
+      console.error('Erro ao criar pasta:', error);
+    }
+  };
+
+  const handleRenameFolder = async (folderId: string) => {
+    if (!editingFolderName.trim()) return;
+
+    try {
+      const response = await fetch('/api/media/folders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: folderId, name: editingFolderName }),
+      });
+
+      if (response.ok) {
+        setFolders(prev => prev.map(f => f.id === folderId ? { ...f, name: editingFolderName } : f));
+        setEditingFolderId(null);
+      }
+    } catch (error) {
+      console.error('Erro ao renomear pasta:', error);
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta pasta? As mídias dentro dela não serão excluídas, apenas ficarão sem pasta.')) return;
+
+    try {
+      const response = await fetch('/api/media/folders', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: folderId }),
+      });
+
+      if (response.ok) {
+        setFolders(prev => prev.filter(f => f.id !== folderId));
+        if (selectedFolderId === folderId) {
+          setSelectedFolderId('all');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao excluir pasta:', error);
+    }
+  };
 
   // Upload handlers
   const handleDrag = (e: React.DragEvent) => {
@@ -97,6 +202,9 @@ export default function MediaModal({
         formData.append('file', file);
         formData.append('type', type);
         formData.append('name', file.name);
+        if (selectedFolderId && selectedFolderId !== 'all') {
+          formData.append('folderId', selectedFolderId);
+        }
 
         const response = await fetch('/api/media', {
           method: 'POST',
@@ -105,7 +213,10 @@ export default function MediaModal({
 
         if (response.ok) {
           const newMedia = await response.json();
-          setMediaItems(prev => [newMedia, ...prev]);
+          // Só adiciona à lista se estivermos vendo "Tudo" ou a pasta específica
+          if (selectedFolderId === 'all' || selectedFolderId === newMedia.folderId || (selectedFolderId === 'root' && !newMedia.folderId)) {
+            setMediaItems(prev => [newMedia, ...prev]);
+          }
         } else {
           const error = await response.json();
           alert(error.error || 'Erro no upload');
@@ -203,6 +314,9 @@ export default function MediaModal({
       formData.append('file', file);
       formData.append('type', 'audio');
       formData.append('name', `Gravação ${new Date().toLocaleTimeString()}`);
+      if (selectedFolderId && selectedFolderId !== 'all') {
+        formData.append('folderId', selectedFolderId);
+      }
 
       const response = await fetch('/api/media', {
         method: 'POST',
@@ -211,7 +325,10 @@ export default function MediaModal({
 
       if (response.ok) {
         const newMedia = await response.json();
-        setMediaItems(prev => [newMedia, ...prev]);
+        // Só adiciona à lista se estivermos vendo "Tudo" ou a pasta específica
+        if (selectedFolderId === 'all' || selectedFolderId === newMedia.folderId || (selectedFolderId === 'root' && !newMedia.folderId)) {
+          setMediaItems(prev => [newMedia, ...prev]);
+        }
         setActiveTab('gallery');
         resetRecording();
       } else {
@@ -289,91 +406,202 @@ export default function MediaModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 min-h-[350px] flex flex-col relative">
-          {isLoading && (
-            <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center">
-              <Loader2 className="animate-spin text-blue-500" size={32} />
+        <div className="flex-1 flex overflow-hidden min-h-[450px]">
+          {/* Sidebar de Pastas */}
+          {activeTab === 'gallery' && (
+            <div className="w-48 border-r border-gray-200 dark:border-zinc-800 flex flex-col bg-gray-50/50 dark:bg-zinc-900/50">
+              <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pastas</span>
+                <button 
+                  onClick={() => setIsCreatingFolder(true)}
+                  className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-blue-500 transition-colors"
+                  title="Nova Pasta"
+                >
+                  <FolderPlus size={16} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                <button
+                  onClick={() => setSelectedFolderId('all')}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    selectedFolderId === 'all' 
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium' 
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <FolderOpen size={16} />
+                  Todas
+                </button>
+                
+                <button
+                  onClick={() => setSelectedFolderId('root')}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    selectedFolderId === 'root' 
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium' 
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <ChevronRight size={16} />
+                  Sem Pasta
+                </button>
+
+                <div className="h-px bg-gray-200 dark:border-zinc-800 my-2" />
+
+                {folders.map(folder => (
+                  <div key={folder.id} className="group relative">
+                    {editingFolderId === folder.id ? (
+                      <div className="px-2 py-1">
+                        <input
+                          autoFocus
+                          className="w-full text-sm bg-white dark:bg-zinc-800 border border-blue-500 rounded px-2 py-1 focus:outline-none"
+                          value={editingFolderName}
+                          onChange={(e) => setEditingFolderName(e.target.value)}
+                          onBlur={() => handleRenameFolder(folder.id)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder(folder.id)}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedFolderId(folder.id)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors pr-8 ${
+                          selectedFolderId === folder.id 
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <Folder size={16} />
+                        <span className="truncate">{folder.name}</span>
+                      </button>
+                    )}
+                    
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingFolderId(folder.id);
+                          setEditingFolderName(folder.name);
+                        }}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded text-gray-400 hover:text-blue-500"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFolder(folder.id);
+                        }}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {isCreatingFolder && (
+                  <form onSubmit={handleCreateFolder} className="px-2 py-1">
+                    <input
+                      autoFocus
+                      placeholder="Nome da pasta..."
+                      className="w-full text-sm bg-white dark:bg-zinc-800 border border-blue-500 rounded px-2 py-1 focus:outline-none"
+                      value={newFolderName}
+                      onChange={(e) => setNewFolderName(e.target.value)}
+                      onBlur={() => {
+                        if (!newFolderName.trim()) setIsCreatingFolder(false);
+                      }}
+                    />
+                  </form>
+                )}
+              </div>
             </div>
           )}
 
-          {activeTab === 'gallery' ? (
-            type === 'image' ? (
-              mediaItems.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mediaItems.map((item) => (
-                    <div key={item.id} className="group relative aspect-square">
-                      <button
-                        onClick={() => onSelect(item.url)}
-                        className="w-full h-full border-2 border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:border-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <Image src={item.url} alt={item.name} fill className="object-cover" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteMedia(e, item.id)}
-                        disabled={deletingId === item.id}
-                        className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                      >
-                        {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                  <ImageIcon size={48} className="mb-4 opacity-50" />
-                  <p>Nenhuma imagem na biblioteca.</p>
-                  <button onClick={() => setActiveTab('upload')} className="mt-4 text-blue-500 hover:underline">Fazer upload agora</button>
-                </div>
-              )
-            ) : (
-              mediaItems.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {mediaItems.map((item) => (
-                    <div 
-                      key={item.id}
-                      className="flex items-center gap-3 p-3 border border-gray-200 dark:border-zinc-800 rounded-lg bg-gray-50 dark:bg-zinc-800/50 hover:border-blue-500 transition-all group relative"
-                    >
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
-                        <Music size={18} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate pr-8">{item.name}</p>
-                        <audio src={item.url} controls className="h-8 w-full mt-1 scale-90 origin-left" />
-                      </div>
-                      <div className="flex flex-col gap-1">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col relative min-w-0">
+            {isLoading && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center">
+                <Loader2 className="animate-spin text-blue-500" size={32} />
+              </div>
+            )}
+
+            {activeTab === 'gallery' ? (
+              type === 'image' ? (
+                mediaItems.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {mediaItems.map((item) => (
+                      <div key={item.id} className="group relative aspect-square">
                         <button
                           onClick={() => onSelect(item.url)}
-                          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                          title="Selecionar Áudio"
+                          className="w-full h-full border-2 border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:border-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <Check size={18} />
+                          <Image src={item.url} alt={item.name} fill className="object-cover" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteMedia(e, item.id)}
                           disabled={deletingId === item.id}
-                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
-                          title="Excluir Áudio"
+                          className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
-                          {deletingId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                  <Music size={48} className="mb-4 opacity-50" />
-                  <p>Nenhum áudio na biblioteca.</p>
-                  <div className="flex gap-4 mt-4">
-                    <button onClick={() => setActiveTab('record')} className="text-blue-500 hover:underline">Gravar um áudio</button>
-                    <span>ou</span>
-                    <button onClick={() => setActiveTab('upload')} className="text-blue-500 hover:underline">Fazer upload</button>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                    <ImageIcon size={48} className="mb-4 opacity-50" />
+                    <p>Nenhuma imagem nesta pasta.</p>
+                    <button onClick={() => setActiveTab('upload')} className="mt-4 text-blue-500 hover:underline">Fazer upload agora</button>
+                  </div>
+                )
+              ) : (
+                mediaItems.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mediaItems.map((item) => (
+                      <div 
+                        key={item.id}
+                        className="flex items-center gap-3 p-3 border border-gray-200 dark:border-zinc-800 rounded-lg bg-gray-50 dark:bg-zinc-800/50 hover:border-blue-500 transition-all group relative"
+                      >
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+                          <Music size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate pr-8">{item.name}</p>
+                          <audio src={item.url} controls className="h-8 w-full mt-1 scale-90 origin-left" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => onSelect(item.url)}
+                            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                            title="Selecionar Áudio"
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteMedia(e, item.id)}
+                            disabled={deletingId === item.id}
+                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+                            title="Excluir Áudio"
+                          >
+                            {deletingId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                    <Music size={48} className="mb-4 opacity-50" />
+                    <p>Nenhum áudio nesta pasta.</p>
+                    <div className="flex gap-4 mt-4">
+                      <button onClick={() => setActiveTab('record')} className="text-blue-500 hover:underline">Gravar um áudio</button>
+                      <span>ou</span>
+                      <button onClick={() => setActiveTab('upload')} className="text-blue-500 hover:underline">Fazer upload</button>
+                    </div>
+                  </div>
+                )
               )
-            )
-          ) : activeTab === 'record' && type === 'audio' ? (
+            ) : activeTab === 'record' && type === 'audio' ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
               {!audioURL ? (
                 <>
@@ -459,6 +687,7 @@ export default function MediaModal({
               </label>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

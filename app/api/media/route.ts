@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     const file = formData.get('file') as File;
     const type = formData.get('type') as string; // 'image' | 'audio'
     const name = formData.get('name') as string || file.name;
+    const folderId = formData.get('folderId') as string || null;
 
     if (!file) {
       return NextResponse.json({ error: 'Nenhum arquivo enviado' }, { status: 400 });
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
         type,
         userId: session.user.id,
         organizationId: session.user.organizationId,
+        folderId: folderId && folderId !== 'all' ? folderId : null,
       },
     });
 
@@ -51,12 +53,14 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type');
+  const folderId = searchParams.get('folderId');
 
   try {
     const media = await prisma.media.findMany({
       where: {
         userId: session.user.id,
         ...(type ? { type } : {}),
+        ...(folderId ? { folderId: folderId === 'root' ? null : folderId } : {}),
       },
       orderBy: {
         createdAt: 'desc',
