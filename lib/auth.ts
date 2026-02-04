@@ -56,21 +56,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     }
   },
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 dias
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? `__Secure-next-auth.session-token` 
-        : `__Secure-next-auth.session-token`,
+      name: `__Secure-authjs.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: NEXTAUTH_URL?.startsWith('https://') || process.env.NODE_ENV === "production",
         domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN === 'localhost' 
           ? undefined 
           : (process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined)
