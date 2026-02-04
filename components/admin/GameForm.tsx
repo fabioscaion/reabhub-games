@@ -202,8 +202,8 @@ export default function GameForm({ initialData }: GameFormProps) {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-zinc-950 border-t border-gray-200 dark:border-zinc-800 flex items-center justify-end gap-4 z-50">
-        <Link href="/" className="px-4 py-2 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
-          Cancelar
+        <Link href="/games" className="px-4 py-2 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
+          Voltar para Jogos
         </Link>
         <button
           type="submit"

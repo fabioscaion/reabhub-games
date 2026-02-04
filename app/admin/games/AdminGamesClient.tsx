@@ -54,13 +54,13 @@ export default function AdminGamesClient({ initialGames }: AdminGamesClientProps
     <div className="min-h-screen bg-zinc-950 text-white selection:bg-red-500 selection:text-white">
       <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/60">
         <div className="container flex h-16 items-center px-4 md:px-8">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight hover:opacity-80 transition-opacity">
+          <Link href="/games" className="flex items-center gap-2 font-bold text-xl tracking-tight hover:opacity-80 transition-opacity">
             <Gamepad2 className="text-red-500" />
             <span>ReabHub<span className="text-red-500">Games</span></span>
           </Link>
           
           <nav className="ml-8 hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Início</Link>
+            <Link href="/games" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Início</Link>
             <Link href="/admin/games" className="text-sm font-medium text-white flex items-center gap-2">
               <LayoutGrid size={16} className="text-red-500" />
               Meus Jogos

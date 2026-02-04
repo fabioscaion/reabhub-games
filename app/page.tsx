@@ -1,6 +1,5 @@
 import { getAllGames } from "@/lib/game-service";
-import CategoryRow from "@/components/ui/CategoryRow";
-import { GameConfig } from "@/types/game";
+import HomeClient from "@/components/ui/HomeClient";
 import { Gamepad2, Plus, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
@@ -10,19 +9,7 @@ export default async function Home() {
   const session = await auth();
   const organizationId = session?.user?.organizationId;
 
-  console.log("Session:", session);
-  
-  const games = await getAllGames(organizationId, false); // false para ocultar rascunhos na home
-
-  // Group games by category
-  const categories: Record<string, GameConfig[]> = {};
-  games.forEach((game) => {
-    const category = game.category || "Outros";
-    if (!categories[category]) {
-      categories[category] = [];
-    }
-    categories[category].push(game);
-  });
+  const games = await getAllGames(organizationId, false);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white selection:bg-red-500 selection:text-white">
@@ -59,18 +46,7 @@ export default async function Home() {
           <p className="text-zinc-400">Selecione uma categoria para começar o tratamento.</p>
         </div>
 
-        {/* Categories Rows */}
-        <div className="space-y-12 pb-20">
-          {Object.keys(categories).length > 0 ? (
-            Object.entries(categories).map(([category, categoryGames]) => (
-              <CategoryRow key={category} title={category} games={categoryGames} />
-            ))
-          ) : (
-            <div className="py-20 text-center text-zinc-500">
-              <p>Nenhum jogo encontrado.</p>
-            </div>
-          )}
-        </div>
+        <HomeClient initialGames={games} />
       </main>
     </div>
   );

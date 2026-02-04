@@ -34,7 +34,7 @@ export default async function GamePage({ params }: GamePageProps) {
       <header className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center">
           <Link 
-            href="/" 
+            href="/games" 
             className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <ArrowLeft size={16} />

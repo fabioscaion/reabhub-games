@@ -9,7 +9,7 @@ interface GameCardProps {
 
 export default function GameCard({ game }: GameCardProps) {
   return (
-    <div className="group relative w-64 h-40 flex-shrink-0 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all hover:scale-105 hover:shadow-xl hover:z-10">
+    <div className="group relative w-full aspect-[16/10] rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all hover:scale-105 hover:shadow-xl hover:z-10">
       <Link
         href={`/games/${game.type}/${game.id}`}
         className="block w-full h-full rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-red-500"

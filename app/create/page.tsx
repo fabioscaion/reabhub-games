@@ -25,7 +25,7 @@ export default async function CreateGamePage() {
       <header className="sticky top-0 z-40 w-full border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur">
         <div className="container flex h-16 items-center px-4 md:px-8">
           <Link 
-            href="/" 
+            href="/games" 
             className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <ArrowLeft size={16} />
