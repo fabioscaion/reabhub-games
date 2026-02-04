@@ -49,12 +49,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Tabs */}
       <div className="flex border-b border-gray-200 dark:border-zinc-800 p-1 bg-gray-50/50 dark:bg-zinc-900/50">
         <button 
+          type="button"
           onClick={() => setActiveTab('properties')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'properties' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
         >
           <MousePointerClick size={14} /> Propriedades
         </button>
         <button 
+          type="button"
           onClick={() => setActiveTab('layers')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'layers' ? 'bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
         >

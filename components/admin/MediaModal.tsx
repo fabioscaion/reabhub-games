@@ -39,6 +39,7 @@ export default function MediaModal({
   const [isLoading, setIsLoading] = useState(false);
   const [mediaItems, setMediaItems] = useState<Media[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   // Folders state
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -229,11 +230,18 @@ export default function MediaModal({
     }
   };
 
-  const handleDeleteMedia = async (e: React.MouseEvent, id: string) => {
+  const handleDeleteMedia = async (e: React.MouseEvent, item: Media) => {
     e.stopPropagation();
-    if (!confirm('Tem certeza que deseja excluir esta mídia?')) return;
+    setShowDeleteConfirm({ id: item.id, name: item.name });
+  };
 
+  const confirmDeleteMedia = async () => {
+    if (!showDeleteConfirm) return;
+    
+    const id = showDeleteConfirm.id;
     setDeletingId(id);
+    setShowDeleteConfirm(null);
+    
     try {
       const response = await fetch('/api/media', {
         method: 'DELETE',
@@ -536,7 +544,7 @@ export default function MediaModal({
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                         </button>
                         <button
-                          onClick={(e) => handleDeleteMedia(e, item.id)}
+                          onClick={(e) => handleDeleteMedia(e, item)}
                           disabled={deletingId === item.id}
                           className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
@@ -576,7 +584,7 @@ export default function MediaModal({
                             <Check size={18} />
                           </button>
                           <button
-                            onClick={(e) => handleDeleteMedia(e, item.id)}
+                            onClick={(e) => handleDeleteMedia(e, item)}
                             disabled={deletingId === item.id}
                             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
                             title="Excluir Áudio"
@@ -688,6 +696,35 @@ export default function MediaModal({
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[500] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-zinc-800">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full flex items-center justify-center mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Confirmar Exclusão</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              Tem certeza que deseja excluir <strong>{showDeleteConfirm.name}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteMedia}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-lg shadow-red-500/20"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

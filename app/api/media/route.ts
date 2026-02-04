@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const extension = file.name.split('.').pop() || (type === 'audio' ? 'webm' : 'png');
-    const filename = `${uuidv4()}.${extension}`;
+    const filename = `${session.user.id}/${uuidv4()}.${extension}`;
     
     const url = await uploadToGCS(buffer, filename, file.type);
 
@@ -100,7 +100,10 @@ export async function DELETE(req: Request) {
     }
 
     // Deleta do GCS
-    const filename = media.url.split('/').pop();
+    // Extract the full path from the URL
+    // URL format: https://storage.googleapis.com/bucket-name/userId/uuid.ext
+    const urlParts = media.url.split('/');
+    const filename = urlParts.slice(4).join('/'); // Skip https:, "", storage.googleapis.com, bucket-name
     if (filename) {
       await deleteFromGCS(filename);
     }

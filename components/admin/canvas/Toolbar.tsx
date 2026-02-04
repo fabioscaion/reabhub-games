@@ -282,7 +282,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <div className="absolute left-full top-0 ml-3 z-[100] bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-200 dark:border-zinc-800 shadow-xl flex flex-col gap-3 w-56 animate-in fade-in slide-in-from-left-2 duration-200">
                 <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
                   <span className="font-medium text-sm text-gray-900 dark:text-gray-100">Modelos de Jogos</span>
-                  <button onClick={() => { setIsGamesPanelOpen(false); setIsWordHuntConfigOpen(false); }} className="text-gray-400 hover:text-gray-600"><X size={14}/></button>
+                  <button 
+                    type="button"
+                    onClick={() => { setIsGamesPanelOpen(false); setIsWordHuntConfigOpen(false); }} 
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={14}/>
+                  </button>
                 </div>
                 
                 {isWordHuntConfigOpen ? (
@@ -322,6 +328,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 ) : (
                   <div className="flex flex-col gap-1">
                     <button 
+                      type="button"
                       onClick={addMemoryPair}
                       className="flex items-center gap-3 p-2 hover:bg-pink-50 dark:hover:bg-pink-900/20 rounded-lg text-left group transition-colors"
                     >
@@ -335,6 +342,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     </button>
 
                     <button 
+                      type="button"
                       onClick={addSequenceSet}
                       className="flex items-center gap-3 p-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg text-left group transition-colors"
                     >
@@ -348,6 +356,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     </button>
 
                     <button 
+                      type="button"
                       onClick={() => setIsWordHuntConfigOpen(true)}
                       className="flex items-center gap-3 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-left group transition-colors"
                     >
