@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Upload, Image as ImageIcon, Check, Music, Mic, Square, Play, RotateCcw, Loader2, Trash2, Folder, FolderPlus, MoreVertical, Edit2, ChevronRight, FolderOpen, Scissors } from "lucide-react";
 import Image from "next/image";
-import AudioEditorModal from "./AudioEditorModal";
+import dynamic from "next/dynamic";
+
+const AudioEditorModal = dynamic(() => import("./AudioEditorModal"), {
+  ssr: false,
+  loading: () => null
+});
 
 interface Media {
   id: string;
@@ -301,6 +306,10 @@ export default function MediaModal({
   // Audio recording handlers
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Seu navegador não suporta gravação de áudio ou a conexão não é segura (HTTPS).");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -406,7 +415,7 @@ export default function MediaModal({
             <Icon className="text-blue-500" />
             {title}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+          <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -414,6 +423,7 @@ export default function MediaModal({
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-zinc-800">
           <button
+            type="button"
             onClick={() => setActiveTab('gallery')}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'gallery' 
@@ -425,6 +435,7 @@ export default function MediaModal({
           </button>
           {type === 'audio' && (
             <button
+              type="button"
               onClick={() => setActiveTab('record')}
               className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'record' 
@@ -436,6 +447,7 @@ export default function MediaModal({
             </button>
           )}
           <button
+            type="button"
             onClick={() => setActiveTab('upload')}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'upload' 
@@ -455,6 +467,7 @@ export default function MediaModal({
               <div className="p-3 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pastas</span>
                 <button 
+                  type="button"
                   onClick={() => setIsCreatingFolder(true)}
                   className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-blue-500 transition-colors"
                   title="Nova Pasta"
@@ -465,6 +478,7 @@ export default function MediaModal({
               
               <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 <button
+                  type="button"
                   onClick={() => setSelectedFolderId('all')}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                     selectedFolderId === 'all' 
@@ -477,6 +491,7 @@ export default function MediaModal({
                 </button>
                 
                 <button
+                  type="button"
                   onClick={() => setSelectedFolderId('root')}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                     selectedFolderId === 'root' 
@@ -505,6 +520,7 @@ export default function MediaModal({
                       </div>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => setSelectedFolderId(folder.id)}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors pr-8 ${
                           selectedFolderId === folder.id 
@@ -519,6 +535,7 @@ export default function MediaModal({
                     
                     <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-0.5">
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setEditingFolderId(folder.id);
@@ -529,6 +546,7 @@ export default function MediaModal({
                         <Edit2 size={12} />
                       </button>
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteFolder(folder.id);
@@ -573,6 +591,7 @@ export default function MediaModal({
                     {mediaItems.map((item) => (
                       <div key={item.id} className="group relative aspect-square">
                         <button
+                          type="button"
                           onClick={() => onSelect(item.url)}
                           className="w-full h-full border-2 border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:border-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
@@ -580,6 +599,7 @@ export default function MediaModal({
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => handleDeleteMedia(e, item)}
                           disabled={deletingId === item.id}
                           className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
@@ -593,7 +613,7 @@ export default function MediaModal({
                   <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                     <ImageIcon size={48} className="mb-4 opacity-50" />
                     <p>Nenhuma imagem nesta pasta.</p>
-                    <button onClick={() => setActiveTab('upload')} className="mt-4 text-blue-500 hover:underline">Fazer upload agora</button>
+                    <button type="button" onClick={() => setActiveTab('upload')} className="mt-4 text-blue-500 hover:underline">Fazer upload agora</button>
                   </div>
                 )
               ) : (
@@ -613,6 +633,7 @@ export default function MediaModal({
                         </div>
                         <div className="flex flex-col gap-1">
                           <button
+                            type="button"
                             onClick={() => onSelect(item.url)}
                             className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                             title="Selecionar Áudio"
@@ -620,6 +641,7 @@ export default function MediaModal({
                             <Check size={18} />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingAudio(item);
@@ -630,6 +652,7 @@ export default function MediaModal({
                             <Scissors size={18} />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => handleDeleteMedia(e, item)}
                             disabled={deletingId === item.id}
                             className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
@@ -646,9 +669,9 @@ export default function MediaModal({
                     <Music size={48} className="mb-4 opacity-50" />
                     <p>Nenhum áudio nesta pasta.</p>
                     <div className="flex gap-4 mt-4">
-                      <button onClick={() => setActiveTab('record')} className="text-blue-500 hover:underline">Gravar um áudio</button>
+                      <button type="button" onClick={() => setActiveTab('record')} className="text-blue-500 hover:underline">Gravar um áudio</button>
                       <span>ou</span>
-                      <button onClick={() => setActiveTab('upload')} className="text-blue-500 hover:underline">Fazer upload</button>
+                      <button type="button" onClick={() => setActiveTab('upload')} className="text-blue-500 hover:underline">Fazer upload</button>
                     </div>
                   </div>
                 )
@@ -674,6 +697,7 @@ export default function MediaModal({
                   )}
 
                   <button
+                    type="button"
                     onClick={isRecording ? stopRecording : startRecording}
                     className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all ${isRecording ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                   >
@@ -691,6 +715,7 @@ export default function MediaModal({
                   </div>
                   <div className="flex gap-4">
                     <button
+                      type="button"
                       onClick={resetRecording}
                       className="flex items-center gap-2 px-6 py-2 border border-gray-300 dark:border-zinc-700 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
                     >
@@ -698,6 +723,7 @@ export default function MediaModal({
                       Gravar Novamente
                     </button>
                     <button
+                      type="button"
                       onClick={saveRecording}
                       className="flex items-center gap-2 px-8 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg font-medium"
                     >
@@ -756,12 +782,14 @@ export default function MediaModal({
             </p>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(null)}
                 className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors font-medium"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={confirmDeleteMedia}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-lg shadow-red-500/20"
               >

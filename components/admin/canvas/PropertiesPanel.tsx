@@ -157,6 +157,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <div className="grid grid-cols-5 gap-2">
                     {['square', 'rounded', 'circle', 'triangle', 'star'].map((shape) => (
                       <button
+                        type="button"
                         key={shape}
                         onClick={() => updateStaticElement(el.id, { value: shape })}
                         className={`p-2 rounded-md border transition-all ${el.value === shape ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-400' : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-500 hover:border-gray-300'}`}
@@ -192,17 +193,17 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 mb-1 block">Estilo</label>
                         <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-md">
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, fontWeight: el.style?.fontWeight === 'bold' ? 'normal' : 'bold' } })} className={`flex-1 p-1.5 rounded ${el.style?.fontWeight === 'bold' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Bold size={14} className="mx-auto" /></button>
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, fontStyle: el.style?.fontStyle === 'italic' ? 'normal' : 'italic' } })} className={`flex-1 p-1.5 rounded ${el.style?.fontStyle === 'italic' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Italic size={14} className="mx-auto" /></button>
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, textDecoration: el.style?.textDecoration === 'underline' ? 'none' : 'underline' } })} className={`flex-1 p-1.5 rounded ${el.style?.textDecoration === 'underline' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Underline size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, fontWeight: el.style?.fontWeight === 'bold' ? 'normal' : 'bold' } })} className={`flex-1 p-1.5 rounded ${el.style?.fontWeight === 'bold' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Bold size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, fontStyle: el.style?.fontStyle === 'italic' ? 'normal' : 'italic' } })} className={`flex-1 p-1.5 rounded ${el.style?.fontStyle === 'italic' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Italic size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, textDecoration: el.style?.textDecoration === 'underline' ? 'none' : 'underline' } })} className={`flex-1 p-1.5 rounded ${el.style?.textDecoration === 'underline' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><Underline size={14} className="mx-auto" /></button>
                         </div>
                       </div>
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 mb-1 block">Alinhamento</label>
                         <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-md">
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'left' } })} className={`flex-1 p-1.5 rounded ${el.style?.textAlign === 'left' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignLeft size={14} className="mx-auto" /></button>
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'center' } })} className={`flex-1 p-1.5 rounded ${!el.style?.textAlign || el.style?.textAlign === 'center' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignCenter size={14} className="mx-auto" /></button>
-                          <button onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'right' } })} className={`flex-1 p-1.5 rounded ${el.style?.textAlign === 'right' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignRight size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'left' } })} className={`flex-1 p-1.5 rounded ${el.style?.textAlign === 'left' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignLeft size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'center' } })} className={`flex-1 p-1.5 rounded ${!el.style?.textAlign || el.style?.textAlign === 'center' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignCenter size={14} className="mx-auto" /></button>
+                          <button type="button" onClick={() => updateStaticElement(el.id, { style: { ...el.style, textAlign: 'right' } })} className={`flex-1 p-1.5 rounded ${el.style?.textAlign === 'right' ? 'bg-white dark:bg-zinc-600 shadow-sm' : 'hover:bg-gray-200 dark:hover:bg-zinc-700'}`}><AlignRight size={14} className="mx-auto" /></button>
                         </div>
                       </div>
                     </div>
@@ -432,6 +433,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <div className="grid grid-cols-5 gap-2">
                         {['square', 'rounded', 'circle', 'triangle', 'star'].map((shape) => (
                           <button
+                            type="button"
                             key={shape}
                             onClick={() => updateOption(opt.id, { content: { ...opt.content, value: shape } })}
                             className={`p-2 rounded-md border transition-all ${opt.content.value === shape ? 'bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/20 dark:border-blue-500 dark:text-blue-400' : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-500 hover:border-gray-300'}`}

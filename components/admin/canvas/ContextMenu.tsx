@@ -75,18 +75,21 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
           {/* Ações de Edição */}
           <div className="px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Edição</div>
           <button 
+            type="button"
             onClick={() => { onCopy?.(); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
             <Copy size={16} /> Copiar
           </button>
           <button 
+            type="button"
             onClick={() => { onCut?.(); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
             <Scissors size={16} /> Recortar
           </button>
           <button 
+            type="button"
             onClick={() => { onDuplicate(); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
@@ -98,24 +101,28 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
           {/* Ações de Camadas */}
           <div className="px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Organizar</div>
           <button 
+            type="button"
             onClick={() => { onLayerChange('front'); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
             <ArrowUp size={16} /> Trazer para Frente
           </button>
           <button 
+            type="button"
             onClick={() => { onLayerChange('forward'); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
             <ChevronUp size={16} /> Avançar
           </button>
           <button 
+            type="button"
             onClick={() => { onLayerChange('backward'); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
             <ChevronDown size={16} /> Recuar
           </button>
           <button 
+            type="button"
             onClick={() => { onLayerChange('back'); onClose(); }} 
             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors"
           >
@@ -128,6 +135,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
       {/* Colar sempre disponível se houver algo no clipboard */}
       <button 
+        type="button"
         onClick={() => { onPaste?.(); onClose(); }} 
         disabled={!hasClipboard}
         className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 flex items-center gap-2 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
@@ -139,6 +147,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
         <>
           <div className="h-px bg-gray-100 dark:bg-zinc-700 my-1" />
           <button 
+            type="button"
             onClick={() => {
               if (selectedItem) onDelete(selectedItem);
               onClose();
