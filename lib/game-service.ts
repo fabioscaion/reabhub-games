@@ -2,14 +2,20 @@ import { prisma } from './prisma';
 import { GameConfig } from "@/types/game";
 import { Prisma } from '@prisma/client';
 
-export async function getAllGames(organizationId?: string, includeDrafts = false): Promise<GameConfig[]> {
+export async function getAllGames(organizationId?: string, includeDrafts = false, userId?: string): Promise<GameConfig[]> {
   try {
-    const where: Prisma.GameWhereInput = {
-      OR: [
+    const where: Prisma.GameWhereInput = {};
+
+    if (userId) {
+      // Se userId for fornecido, buscar apenas jogos desse usuário
+      where.userId = userId;
+    } else {
+      // Caso contrário, comportamento padrão: públicos ou da organização
+      where.OR = [
         { isPublic: true },
         ...(organizationId ? [{ organizationId }] : []),
-      ],
-    };
+      ];
+    }
 
     if (!includeDrafts) {
       where.status = 'published';

@@ -11,9 +11,10 @@ export default async function AdminGamesPage() {
   }
 
   const organizationId = session.user.organizationId;
+  const userId = session.user.id;
   
-  // Buscar todos os jogos da organização, incluindo rascunhos
-  const games = await getAllGames(organizationId, true);
+  // Buscar apenas os jogos criados pelo usuário logado
+  const games = await getAllGames(organizationId, true, userId);
 
   return <AdminGamesClient initialGames={games} />;
 }
