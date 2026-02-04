@@ -198,7 +198,7 @@ export default function HomeClient({ initialGames }: HomeClientProps) {
               </div>
               
               {filteredGames.length > 0 ? (
-                <div className="flex flex-wrap gap-8 justify-center sm:justify-start">
+                <div className="flex flex-wrap gap-8 justify-center sm:justify-start py-4 -my-4">
                   {filteredGames.map((game) => (
                     <div key={game.id} className="w-64 md:w-72 shrink-0">
                       <GameCard game={game} />

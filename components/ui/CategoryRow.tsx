@@ -76,7 +76,7 @@ export default function CategoryRow({ title, games }: CategoryRowProps) {
         <div 
           ref={scrollContainerRef}
           onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0"
+          className="flex gap-4 overflow-x-auto py-4 scrollbar-hide scroll-smooth snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 -my-4"
         >
           {games.map((game) => (
             <div key={game.id} className="snap-start shrink-0 w-64 md:w-72">

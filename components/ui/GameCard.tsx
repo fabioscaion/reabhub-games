@@ -15,7 +15,7 @@ export default function GameCard({ game }: GameCardProps) {
         className="block w-full h-full rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-red-500"
       >
         {/* Background Image */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 overflow-hidden">
           {game.coverImage ? (
             <Image
               src={game.coverImage}
