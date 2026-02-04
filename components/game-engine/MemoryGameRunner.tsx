@@ -282,7 +282,7 @@ export default function MemoryGameRunner({ config }: MemoryGameRunnerProps) {
             Jogar Novamente
           </button>
           <Link
-            href="/"
+            href="/games"
             className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <Home size={20} />

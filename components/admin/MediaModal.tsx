@@ -558,7 +558,12 @@ export default function MediaModal({
                           value={editingFolderName}
                           onChange={(e) => setEditingFolderName(e.target.value)}
                           onBlur={() => handleRenameFolder(folder.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder(folder.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleRenameFolder(folder.id);
+                            }
+                          }}
                         />
                       </div>
                     ) : (
@@ -626,6 +631,12 @@ export default function MediaModal({
                       onChange={(e) => setNewFolderName(e.target.value)}
                       onBlur={() => {
                         if (!newFolderName.trim()) setIsCreatingFolder(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCreateFolder(e);
+                        }
                       }}
                     />
                   </form>
