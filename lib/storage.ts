@@ -26,11 +26,25 @@ export async function uploadToGCS(
 
   const file = bucket.file(filename);
   
-  await file.save(buffer, {
-    metadata: {
-      contentType: contentType,
-    },
-    resumable: false,
+  // Use a more robust way to save the file
+  await new Promise<void>((resolve, reject) => {
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: contentType,
+      },
+      resumable: false,
+    });
+
+    stream.on('error', (err) => {
+      console.error('GCS Upload Stream Error:', err);
+      reject(err);
+    });
+
+    stream.on('finish', () => {
+      resolve();
+    });
+
+    stream.end(buffer);
   });
 
   // Return the public URL
