@@ -25,6 +25,35 @@ model Game {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  media          GameMedia[]
+
   @@index([userId])
   @@index([organizationId])
+}
+
+model Media {
+  id             String      @id @default(uuid())
+  url            String      @db.Text
+  name           String
+  type           String      // 'image' | 'audio'
+  userId         String
+  organizationId String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  games          GameMedia[]
+
+  @@index([userId])
+}
+
+model GameMedia {
+  id      String @id @default(uuid())
+  gameId  String
+  mediaId String
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@unique([gameId, mediaId])
+  @@index([gameId])
+  @@index([mediaId])
 }

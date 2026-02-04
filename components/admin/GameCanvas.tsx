@@ -5,8 +5,7 @@ import { Level, Option, Asset, GameType, DragItem } from "@/types/game";
 import { Play, ArrowLeft, Save, CheckCircle2, Loader2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LogicEditor from './logic/LogicEditor';
-import ImageLibraryModal from "./ImageLibraryModal";
-import AudioLibraryModal from "./AudioLibraryModal";
+import MediaModal from "./MediaModal";
 import PreviewModal from "./PreviewModal";
 import Toolbar from "./canvas/Toolbar";
 import Sidebar from "./canvas/Sidebar";
@@ -16,7 +15,7 @@ import { useCanvasHandlers } from "@/hooks/useCanvasHandlers";
 import { useLayerManagement } from "@/hooks/useLayerManagement";
 import { useMediaLibraries } from "@/hooks/useMediaLibraries";
 import { useElementManagement } from "@/hooks/useElementManagement";
-import { toBase64, handleFileUpload, generateId } from "@/lib/utils";
+import { generateId } from "@/lib/utils";
 
 interface GameCanvasProps {
   level: Level;
@@ -183,16 +182,13 @@ export default function GameCanvas({
   });
 
   const {
-    isImageLibraryOpen,
-    setIsImageLibraryOpen,
+    isMediaModalOpen,
+    mediaModalType,
+    closeMediaModal,
     storedImages,
-    openImageLibrary,
-    handleImageSelect,
-    isAudioLibraryOpen,
-    setIsAudioLibraryOpen,
     storedAudios,
-    openAudioLibrary,
-    handleAudioSelect,
+    openMediaLibrary,
+    handleMediaSelect,
   } = useMediaLibraries();
 
   const {
@@ -423,12 +419,10 @@ export default function GameCanvas({
             editingView={editingView}
             onAddStaticElement={addStaticElement}
             onAddOption={addOption}
-            onOpenImageLibrary={openImageLibrary}
-            onOpenAudioLibrary={openAudioLibrary}
+            onOpenMediaLibrary={openMediaLibrary}
             onShowLogicEditor={setShowLogicEditor}
             onUpdateLevel={updateLevel}
             onSetSelectedItem={setSelectedItem}
-            onFileUpload={handleFileUpload}
           />
         </div>
       </div>
@@ -442,8 +436,7 @@ export default function GameCanvas({
         editingView={editingView}
         updateOption={updateOption}
         updateStaticElement={updateStaticElement}
-        onOpenImageLibrary={openImageLibrary}
-        onOpenAudioLibrary={openAudioLibrary}
+        onOpenMediaLibrary={openMediaLibrary}
         onShowLogicEditor={(show, focusId) => {
           if (focusId) setLogicFocusElementId(focusId);
           setShowLogicEditor(show);
@@ -476,18 +469,12 @@ export default function GameCanvas({
       onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
     />
 
-    <ImageLibraryModal
-      isOpen={isImageLibraryOpen}
-      onClose={() => setIsImageLibraryOpen(false)}
-      onSelect={handleImageSelect}
-      initialImages={storedImages}
-    />
-
-    <AudioLibraryModal
-      isOpen={isAudioLibraryOpen}
-      onClose={() => setIsAudioLibraryOpen(false)}
-      onSelect={handleAudioSelect}
-      initialAudios={storedAudios}
+    <MediaModal
+      isOpen={isMediaModalOpen}
+      onClose={closeMediaModal}
+      onSelect={handleMediaSelect}
+      type={mediaModalType}
+      initialItems={mediaModalType === 'image' ? storedImages : storedAudios}
     />
 
     {showLogicEditor && (
@@ -508,7 +495,7 @@ export default function GameCanvas({
           setShowLogicEditor(false);
           setLogicFocusElementId(null);
         }}
-        onOpenAudioLibrary={openAudioLibrary}
+        onOpenMediaLibrary={openMediaLibrary}
         availableLevels={allLevels.map(l => ({ id: l.id, name: l.name || `Nível ${l.id.substring(0,4)}` }))}
         elements={[
           ...level.options.map(o => ({ id: o.id, type: 'option', name: o.content.name || o.content.value })),

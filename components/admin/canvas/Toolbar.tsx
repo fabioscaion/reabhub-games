@@ -23,12 +23,10 @@ interface ToolbarProps {
   editingView: 'level' | 'success' | 'error';
   onAddStaticElement: (type: "text" | "image" | "shape" | "audio" | "input", initialStyle?: any, initialValue?: string) => void;
   onAddOption: (type: "text" | "image" | "shape", initialStyle?: any, initialValue?: string) => void;
-  onOpenImageLibrary: (callback: (base64: string) => void) => void;
-  onOpenAudioLibrary: (callback: (base64: string) => void) => void;
+  onOpenMediaLibrary: (type: 'image' | 'audio', callback: (url: string) => void) => void;
   onShowLogicEditor: (show: boolean) => void;
   onUpdateLevel: (updates: Partial<Level>) => void;
   onSetSelectedItem: (item: { type: "option" | "static"; id: string } | null) => void;
-  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
@@ -36,12 +34,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   editingView,
   onAddStaticElement,
   onAddOption,
-  onOpenImageLibrary,
-  onOpenAudioLibrary,
+  onOpenMediaLibrary,
   onShowLogicEditor,
   onUpdateLevel,
   onSetSelectedItem,
-  onFileUpload
 }) => {
   const [isGamesPanelOpen, setIsGamesPanelOpen] = useState(false);
   const [isWordHuntConfigOpen, setIsWordHuntConfigOpen] = useState(false);
@@ -189,7 +185,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="grid grid-cols-2 gap-1">
           <button 
             type="button"
-            onClick={() => onOpenImageLibrary((base64) => onAddStaticElement("image", undefined, base64))}
+            onClick={() => onOpenMediaLibrary('image', (url: string) => onAddStaticElement("image", undefined, url))}
             className="p-2 text-gray-600 dark:text-gray-300 bg-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip group relative flex justify-center"
           >
             <ImageIcon size={20} />
@@ -221,7 +217,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </button>
           <button 
             type="button"
-            onClick={() => onOpenAudioLibrary((base64) => onAddStaticElement("audio", undefined, base64))}
+            onClick={() => onOpenMediaLibrary('audio', (url: string) => onAddStaticElement("audio", undefined, url))}
             className="p-2 text-gray-600 dark:text-gray-300 bg-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors tooltip group relative flex justify-center col-span-2"
           >
             <Music size={20} />
@@ -376,16 +372,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <div className="w-full">
         <p className="text-[10px] text-center text-gray-400 font-medium mb-2 uppercase tracking-wider">Cena</p>
         <div className="grid grid-cols-2 gap-1">
-          <label className="p-2 text-gray-600 dark:text-gray-300 bg-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer group relative flex justify-center">
+          <button 
+            type="button"
+            onClick={() => onOpenMediaLibrary('audio', (url: string) => onUpdateLevel({ backgroundAudio: url }))}
+            className="p-2 text-gray-600 dark:text-gray-300 bg-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors group relative flex justify-center"
+          >
             <Music size={20} className={level.backgroundAudio ? "text-green-500" : ""} />
-            <input 
-              type="file" 
-              accept="audio/*" 
-              className="hidden"
-              onChange={(e) => onFileUpload(e, (base64) => onUpdateLevel({ backgroundAudio: base64 }))}
-            />
-            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Música</span>
-          </label>
+            <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">Música de Fundo</span>
+          </button>
           
           <label className="p-2 text-gray-600 dark:text-gray-300 bg-transparent hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer group relative flex justify-center">
             <Palette size={20} style={{ color: currentBgColor }} />

@@ -405,7 +405,7 @@ export const ActionNode = ({ data }: any) => {
              <label className="text-[10px] text-gray-400 block mb-1 uppercase font-bold">Configuração</label>
              <button 
                className="w-full text-[10px] p-2 border border-dashed border-gray-300 dark:border-zinc-700 rounded bg-gray-50 dark:bg-zinc-900 text-gray-500 hover:border-blue-500"
-               onClick={() => data.onOpenAudioLibrary?.((b64: string) => data.onDataChange?.({ value: b64 }))}
+               onClick={() => data.onOpenMediaLibrary?.('audio', (b64: string) => data.onDataChange?.({ value: b64 }))}
              >
                {data.value ? 'Som Selecionado ✓' : 'Clique para Selecionar'}
              </button>

@@ -33,7 +33,7 @@ interface LogicEditorProps {
   elements: any[]; // List of elements in the current level to trigger events on
   availableLevels?: { id: string, name: string }[];
   focusElementId?: string;
-  onOpenAudioLibrary?: (callback: (base64: string) => void) => void;
+  onOpenMediaLibrary?: (type: 'image' | 'audio', callback: (url: string) => void) => void;
 }
 
 export default function LogicEditor({ 
@@ -44,7 +44,7 @@ export default function LogicEditor({
   elements, 
   availableLevels = [],
   focusElementId,
-  onOpenAudioLibrary 
+  onOpenMediaLibrary 
 }: LogicEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>(initialEdges);
@@ -81,10 +81,10 @@ export default function LogicEditor({
         availableElements: elements,
         availableLevels: availableLevels,
         onDataChange: (newData: any) => handleNodeDataChange(node.id, newData),
-        onOpenAudioLibrary: onOpenAudioLibrary
+        onOpenMediaLibrary: onOpenMediaLibrary
       }
     }));
-  }, [nodes, elements, handleNodeDataChange, onOpenAudioLibrary]);
+  }, [nodes, elements, handleNodeDataChange, onOpenMediaLibrary]);
 
   // Initialize nodes from initialNodes only once
   React.useEffect(() => {

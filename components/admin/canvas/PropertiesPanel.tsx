@@ -25,7 +25,7 @@ import {
   Move 
 } from "lucide-react";
 import Image from "next/image";
-import { cn, handleFileUpload } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface PropertiesPanelProps {
   selectedItem: DragItem | null;
@@ -34,8 +34,7 @@ interface PropertiesPanelProps {
   editingView: 'level' | 'success' | 'error';
   updateOption: (id: string, updates: Partial<Option>) => void;
   updateStaticElement: (id: string, updates: Partial<Asset & { position?: { x: number; y: number } }>) => void;
-  onOpenImageLibrary: (callback: (base64: string) => void) => void;
-  onOpenAudioLibrary: (callback: (base64: string) => void) => void;
+  onOpenMediaLibrary: (type: 'image' | 'audio', callback: (url: string) => void) => void;
   onShowLogicEditor: (show: boolean, focusId?: string) => void;
   onLayerChange: (action: 'front' | 'back' | 'forward' | 'backward') => void;
   getActiveStaticElements: () => any[];
@@ -49,8 +48,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   editingView,
   updateOption,
   updateStaticElement,
-  onOpenImageLibrary,
-  onOpenAudioLibrary,
+  onOpenMediaLibrary,
   onShowLogicEditor,
   onLayerChange,
   getActiveStaticElements,
@@ -137,7 +135,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <div className="mt-1">
                     <button 
                       type="button"
-                      onClick={() => onOpenImageLibrary((b64) => updateStaticElement(el.id, { value: b64 }))}
+                      onClick={() => onOpenMediaLibrary('image', (url: string) => updateStaticElement(el.id, { value: url }))}
                       className="group relative w-full aspect-video border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden hover:border-blue-500 transition-colors bg-gray-50 dark:bg-zinc-800"
                     >
                       {el.value ? (
@@ -409,7 +407,7 @@ const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <div className="mt-1">
                     <button 
                       type="button"
-                      onClick={() => onOpenImageLibrary((b64) => updateOption(opt.id, { content: { ...opt.content, value: b64 } }))}
+                      onClick={() => onOpenMediaLibrary('image', (url: string) => updateOption(opt.id, { content: { ...opt.content, value: url } }))}
                       className="group relative w-full aspect-video border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden hover:border-blue-500 transition-colors bg-gray-50 dark:bg-zinc-800"
                     >
                       {opt.content.value ? (

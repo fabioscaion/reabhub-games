@@ -77,6 +77,33 @@ export async function getGameConfig(id: string, organizationId?: string): Promis
   }
 }
 
+function extractMediaUrls(obj: any): string[] {
+  const urls: Set<string> = new Set();
+  
+  function recurse(current: any) {
+    if (!current) return;
+    
+    if (typeof current === 'string') {
+      if (current.startsWith('https://storage.googleapis.com/')) {
+        urls.add(current);
+      }
+    } else if (Array.isArray(current)) {
+      current.forEach(recurse);
+    } else if (typeof current === 'object') {
+      // Padrões comuns no config do jogo
+      if ((current.type === 'image' || current.type === 'audio') && typeof current.value === 'string') {
+        if (current.value.startsWith('https://storage.googleapis.com/')) {
+          urls.add(current.value);
+        }
+      }
+      Object.values(current).forEach(recurse);
+    }
+  }
+  
+  recurse(obj);
+  return Array.from(urls);
+}
+
 export async function saveGame(game: GameConfig & { userId: string, organizationId: string, isPublic?: boolean }): Promise<void> {
   const { id, name, description, type, category, coverImage, status, userId, organizationId, isPublic, levels, ...rest } = game;
   
@@ -86,6 +113,7 @@ export async function saveGame(game: GameConfig & { userId: string, organization
 
   const config = { levels, ...rest } as unknown as Prisma.InputJsonValue;
 
+  // Upsert do jogo
   await prisma.game.upsert({
     where: { id },
     update: {
@@ -114,6 +142,36 @@ export async function saveGame(game: GameConfig & { userId: string, organization
       organizationId,
     },
   });
+
+  // Sincronizar vínculos de mídia
+  const allUrls = extractMediaUrls({ config, coverImage });
+  
+  if (allUrls.length > 0) {
+    const mediaItems = await prisma.media.findMany({
+      where: {
+        url: { in: allUrls },
+      },
+    });
+    
+    const mediaIds = mediaItems.map(m => m.id);
+    
+    await prisma.$transaction([
+      prisma.gameMedia.deleteMany({
+        where: { gameId: id },
+      }),
+      prisma.gameMedia.createMany({
+        data: mediaIds.map(mediaId => ({
+          gameId: id,
+          mediaId,
+        })),
+        skipDuplicates: true,
+      }),
+    ]);
+  } else {
+    await prisma.gameMedia.deleteMany({
+      where: { gameId: id },
+    });
+  }
 }
 
 export async function deleteGame(id: string, organizationId: string): Promise<void> {

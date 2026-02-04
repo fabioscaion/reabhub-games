@@ -12,8 +12,7 @@ interface SidebarProps {
   editingView: 'level' | 'success' | 'error';
   updateOption: (id: string, updates: Partial<Option>) => void;
   updateStaticElement: (id: string, updates: Partial<Asset & { position?: { x: number; y: number } }>) => void;
-  onOpenImageLibrary: (callback: (base64: string) => void) => void;
-  onOpenAudioLibrary: (callback: (base64: string) => void) => void;
+  onOpenMediaLibrary: (type: 'image' | 'audio', callback: (url: string) => void) => void;
   onShowLogicEditor: (show: boolean, focusId?: string) => void;
   onLayerChange: (action: 'front' | 'back' | 'forward' | 'backward') => void;
   getActiveStaticElements: () => any[];
@@ -33,8 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   editingView,
   updateOption,
   updateStaticElement,
-  onOpenImageLibrary,
-  onOpenAudioLibrary,
+  onOpenMediaLibrary,
   onShowLogicEditor,
   onLayerChange,
   getActiveStaticElements,
@@ -74,8 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               editingView={editingView}
               updateOption={updateOption}
               updateStaticElement={updateStaticElement}
-              onOpenImageLibrary={onOpenImageLibrary}
-              onOpenAudioLibrary={onOpenAudioLibrary}
+              onOpenMediaLibrary={onOpenMediaLibrary}
               onShowLogicEditor={onShowLogicEditor}
               onLayerChange={onLayerChange}
               getActiveStaticElements={getActiveStaticElements}

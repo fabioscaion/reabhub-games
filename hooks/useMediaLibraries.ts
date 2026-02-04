@@ -3,56 +3,52 @@
 import { useState } from "react";
 
 export function useMediaLibraries() {
-  const [isImageLibraryOpen, setIsImageLibraryOpen] = useState(false);
-  const [imageLibraryCallback, setImageLibraryCallback] = useState<((base64: string) => void) | null>(null);
-  const [storedImages, setStoredImages] = useState<string[]>([]);
+  const [mediaModal, setMediaModal] = useState<{
+    isOpen: boolean;
+    type: 'image' | 'audio';
+    callback: ((url: string) => void) | null;
+  }>({
+    isOpen: false,
+    type: 'image',
+    callback: null,
+  });
 
-  const [isAudioLibraryOpen, setIsAudioLibraryOpen] = useState(false);
-  const [audioLibraryCallback, setAudioLibraryCallback] = useState<((base64: string) => void) | null>(null);
+  const [storedImages, setStoredImages] = useState<string[]>([]);
   const [storedAudios, setStoredAudios] = useState<string[]>([]);
 
-  const openImageLibrary = (callback: (base64: string) => void) => {
-    setImageLibraryCallback(() => callback);
-    setIsImageLibraryOpen(true);
+  const openMediaLibrary = (type: 'image' | 'audio', callback: (url: string) => void) => {
+    setMediaModal({
+      isOpen: true,
+      type,
+      callback,
+    });
   };
 
-  const openAudioLibrary = (callback: (base64: string) => void) => {
-    setAudioLibraryCallback(() => callback);
-    setIsAudioLibraryOpen(true);
-  };
+  const handleMediaSelect = (url: string) => {
+    if (mediaModal.callback) {
+      mediaModal.callback(url);
+    }
 
-  const handleImageSelect = (base64: string) => {
-    if (imageLibraryCallback) {
-      imageLibraryCallback(base64);
+    if (mediaModal.type === 'image') {
+      if (!storedImages.includes(url)) {
+        setStoredImages(prev => [url, ...prev]);
+      }
+    } else {
+      if (!storedAudios.includes(url)) {
+        setStoredAudios(prev => [url, ...prev]);
+      }
     }
-    if (!storedImages.includes(base64)) {
-        setStoredImages(prev => [base64, ...prev]);
-    }
-    setIsImageLibraryOpen(false);
-    setImageLibraryCallback(null);
-  };
 
-  const handleAudioSelect = (base64: string) => {
-    if (audioLibraryCallback) {
-      audioLibraryCallback(base64);
-    }
-    if (!storedAudios.includes(base64)) {
-        setStoredAudios(prev => [base64, ...prev]);
-    }
-    setIsAudioLibraryOpen(false);
-    setAudioLibraryCallback(null);
+    setMediaModal(prev => ({ ...prev, isOpen: false, callback: null }));
   };
 
   return {
-    isImageLibraryOpen,
-    setIsImageLibraryOpen,
+    isMediaModalOpen: mediaModal.isOpen,
+    mediaModalType: mediaModal.type,
+    closeMediaModal: () => setMediaModal(prev => ({ ...prev, isOpen: false })),
     storedImages,
-    openImageLibrary,
-    handleImageSelect,
-    isAudioLibraryOpen,
-    setIsAudioLibraryOpen,
     storedAudios,
-    openAudioLibrary,
-    handleAudioSelect,
+    openMediaLibrary,
+    handleMediaSelect,
   };
 }
